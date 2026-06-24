@@ -262,7 +262,7 @@ function applyPass(state: GameState, seat: Seat): GameState {
         toAct: leader,
         lastPlayer: null,
         passesInARow: 0,
-        history,
+        history: [], // new trick starts fresh
       },
     }
   }

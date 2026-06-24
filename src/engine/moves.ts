@@ -8,7 +8,6 @@ import {
   Card,
   NumberCard,
   NaturalRank,
-  Suit,
   SUITS,
   isWild,
   isJoker,
@@ -78,7 +77,7 @@ function sameRankSubset(idx: HandIndex, r: NaturalRank, k: number): Card[] | nul
 }
 
 /** Enumerate all candidate subsets worth recognizing. */
-function candidateSubsets(idx: HandIndex, level: NaturalRank): Card[][] {
+function candidateSubsets(idx: HandIndex): Card[][] {
   const subs: Card[][] = []
 
   // Singles: every physical card.
@@ -197,7 +196,7 @@ function comboKey(c: Combination): string {
 /** Every legal combination that could be LED from this hand. */
 export function generateLeadMoves(handCards: Card[], level: NaturalRank): Combination[] {
   const idx = indexHand(handCards, level)
-  const subs = candidateSubsets(idx, level)
+  const subs = candidateSubsets(idx)
   const seen = new Set<string>()
   const out: Combination[] = []
   for (const sub of subs) {

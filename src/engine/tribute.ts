@@ -70,7 +70,7 @@ export function planTribute(
   const doubleDown = teamOf(second) === winTeam // 1-2 finish
 
   const losers: Seat[] = ([0, 1, 2, 3] as Seat[]).filter((s) => teamOf(s) !== winTeam)
-  const losersBigJokers = losers.reduce((n, s) => n + bigJokerCount(hands[s]), 0)
+  const losersBigJokers = losers.reduce<number>((n, s) => n + bigJokerCount(hands[s]), 0)
   if (losersBigJokers >= 2) {
     // Anti-tribute: cancelled. The previous last-place player still leads.
     return { cancelled: true, payments: [], returns: [], firstLeader: fourth }

@@ -1,0 +1,41 @@
+import { NavLink, Route, Routes } from 'react-router-dom'
+import { Home } from './pages/Home'
+import { Play } from './pages/Play'
+import { Learn } from './pages/Learn'
+import { Lesson } from './pages/Lesson'
+import { Reference } from './pages/Reference'
+
+export function App() {
+  return (
+    <div className="app-shell">
+      <nav className="nav">
+        <NavLink to="/" className="brand">
+          Guandan<span className="cn">掼蛋</span>
+        </NavLink>
+        <div className="spacer" />
+        <NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>
+          Home
+        </NavLink>
+        <NavLink to="/learn" className={({ isActive }) => (isActive ? 'active' : '')}>
+          Learn
+        </NavLink>
+        <NavLink to="/play" className={({ isActive }) => (isActive ? 'active' : '')}>
+          Play
+        </NavLink>
+        <NavLink to="/reference" className={({ isActive }) => (isActive ? 'active' : '')}>
+          Reference
+        </NavLink>
+      </nav>
+
+      <main>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/play" element={<Play />} />
+          <Route path="/learn" element={<Learn />} />
+          <Route path="/learn/:id" element={<Lesson />} />
+          <Route path="/reference" element={<Reference />} />
+        </Routes>
+      </main>
+    </div>
+  )
+}

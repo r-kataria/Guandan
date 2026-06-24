@@ -42,7 +42,7 @@ function mulberry32(seed: number) {
 
 /** Total cards across all hands + already-played should stay consistent (no cards vanish). */
 function totalCards(state: GameState): number {
-  return ([0, 1, 2, 3] as Seat[]).reduce((n, s) => n + state.hands[s].length, 0)
+  return ([0, 1, 2, 3] as Seat[]).reduce<number>((n, s) => n + state.hands[s].length, 0)
 }
 
 describe('hand simulation', () => {
