@@ -30,36 +30,55 @@ bomb — all of which this project implements in full.
   hints.
 - **Rules reference** — every combination, the bomb order, and the tribute/scoring rules in one
   page.
+- **Online multiplayer** (`server/` + `src/net/`) — create or join a room by code and play with
+  1–4 real people; empty seats are filled by bots. With two players they're placed on opposite
+  teams. A small Node + WebSocket server runs the authoritative game (reusing the same engine and
+  bots) and sends each player a redacted view, so no one can ever see another player's hand.
 
 ## Getting started
 
 ```bash
 npm install
-npm run dev        # start the dev server
+npm run dev        # single-player only: Vite dev server (Home/Learn/Play/Reference)
+npm run dev:all    # multiplayer too: Vite + the WebSocket game server together
 npm run build      # type-check + production build
 npm run test       # run the Vitest suite
 ```
 
-Then open the printed local URL. Start with **Learn** if you're new to Guandan, or jump straight
-into **Play**.
+Then open the printed local URL. Start with **Learn** if you're new to Guandan, jump straight into
+**Play** vs bots, or open **Online** to play with friends.
+
+### Online multiplayer
+
+For the **Online** tab to work you need the game server running too:
+
+- **Dev:** `npm run dev:all` runs Vite (port 5173) and the server (port 8787) together; Vite
+  proxies the WebSocket to the server. Test it with two browser tabs.
+- **Production / sharing:** `npm run build` then `npm run start` — the server serves the built
+  client *and* the WebSocket on a single port (`PORT`, default 8787). Deploy that one process to
+  any Node host (Render/Railway/Fly/a VPS) and friends can join over the internet by room code.
 
 ## Project layout
 
 ```
+server/         Node + WebSocket multiplayer server (thin transport over src/net/room)
 src/
   engine/       pure rules engine (cards, combinations, compare, moves, state, tribute, scoring)
-  ai/           heuristic bots (Easy/Medium/Hard)
+  ai/           bots: Easy/Medium/Hard heuristics + the Master tier (eval + master)
+  net/          multiplayer: protocol, seating, redaction (view), GameRoom core, useRoom hook
   game/         React hook bridging engine↔UI, plus the coach
-  components/   Table, Hand, Card, Controls, panels, overlays
+  components/   Table, Hand, Card, Controls, panels, overlays, online/ (rooms, lobby, board)
   learn/        lesson content, the drill runner, progress storage
-  pages/        Home, Play, Learn, Lesson, Reference
+  pages/        Home, Play, Online, Learn, Lesson, Reference
 ```
 
 ## Testing
 
-43 tests cover combination parsing (including wild cards), `canBeat` across every type, full
-simulated games played to completion, AI move legality, and the React UI (rendering + a drill
-solved through the engine + the timer-driven play loop).
+57 tests cover combination parsing (including wild cards), `canBeat` across every type, full
+simulated games played to completion, AI move legality, a head-to-head harness asserting Master
+beats Hard, the multiplayer room core (a full 2-human + 2-bot game in-process, seat assignment,
+disconnect→bot takeover, and that a player view never leaks another seat's cards), and the React
+UI (rendering + a drill solved through the engine + the timer-driven play loop).
 
 ```bash
 npm run test

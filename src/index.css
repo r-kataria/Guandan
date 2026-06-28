@@ -272,6 +272,39 @@ button.danger { background: #3a2230; border-color: #5e2b3d; }
 .ref-table th { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.4px; }
 
 .kbd-hint { color: var(--muted); font-size: 0.8rem; margin-top: 0.4rem; }
+
+.text-input {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid #2c3e52;
+  background: var(--panel-2);
+  color: var(--ink);
+  font: inherit;
+}
+.text-input:focus { outline: none; border-color: var(--accent); }
+
+.room-code {
+  font-size: 1.8rem;
+  font-weight: 900;
+  letter-spacing: 6px;
+  color: var(--accent);
+  background: var(--panel-2);
+  border: 1px dashed #3a4d63;
+  border-radius: 10px;
+  padding: 0.5rem 1rem;
+  display: inline-block;
+}
+.lobby-seats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin: 1rem 0; }
+.lobby-seat {
+  display: flex; align-items: center; gap: 0.6rem;
+  background: var(--panel-2); border: 1px solid #2a3c50; border-radius: 10px; padding: 0.6rem 0.8rem;
+}
+.lobby-seat.t0 { border-left: 4px solid var(--good); }
+.lobby-seat.t1 { border-left: 4px solid var(--bad); }
+.lobby-seat .role { margin-left: auto; font-size: 0.74rem; color: var(--muted); }
+.turn-banner { font-weight: 700; padding: 0.4rem 0.8rem; border-radius: 8px; background: var(--panel-2); display: inline-block; }
+.turn-banner.you { background: var(--accent); color: #1a1304; }
 .inline-cards { display: inline-flex; gap: 2px; vertical-align: middle; margin: 0 4px; }
 .ic {
   display: inline-block;

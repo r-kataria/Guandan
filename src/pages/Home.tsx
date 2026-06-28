@@ -19,6 +19,9 @@ export function Home() {
           <Link to="/play">
             <button className="ghost">Jump into a game</button>
           </Link>
+          <Link to="/online">
+            <button className="ghost">Play online with friends</button>
+          </Link>
         </div>
       </div>
 

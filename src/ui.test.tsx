@@ -31,6 +31,13 @@ describe('UI smoke', () => {
     expect(screen.getByText(/level in play/i)).toBeTruthy()
   })
 
+  it('renders the Online page with create/join room options', () => {
+    renderAt('/online')
+    expect(screen.getByText('Create a room')).toBeTruthy()
+    expect(screen.getByText('Join a room')).toBeTruthy()
+    expect(screen.getByText(/opposite teams/i)).toBeTruthy()
+  })
+
   it('renders the Learn list with all 15 lessons', () => {
     renderAt('/learn')
     expect(screen.getByText(/15 lessons complete|\/ 15/i)).toBeTruthy()

@@ -6,6 +6,12 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   base: './',
+  server: {
+    // Proxy the WebSocket endpoint to the game server during `npm run dev`.
+    proxy: {
+      '/ws': { target: 'ws://localhost:8787', ws: true },
+    },
+  },
   test: {
     globals: true,
     environment: 'node',

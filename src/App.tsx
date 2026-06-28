@@ -1,6 +1,7 @@
 import { NavLink, Route, Routes } from 'react-router-dom'
 import { Home } from './pages/Home'
 import { Play } from './pages/Play'
+import { Online } from './pages/Online'
 import { Learn } from './pages/Learn'
 import { Lesson } from './pages/Lesson'
 import { Reference } from './pages/Reference'
@@ -22,6 +23,9 @@ export function App() {
         <NavLink to="/play" className={({ isActive }) => (isActive ? 'active' : '')}>
           Play
         </NavLink>
+        <NavLink to="/online" className={({ isActive }) => (isActive ? 'active' : '')}>
+          Online
+        </NavLink>
         <NavLink to="/reference" className={({ isActive }) => (isActive ? 'active' : '')}>
           Reference
         </NavLink>
@@ -31,6 +35,7 @@ export function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/play" element={<Play />} />
+          <Route path="/online" element={<Online />} />
           <Route path="/learn" element={<Learn />} />
           <Route path="/learn/:id" element={<Lesson />} />
           <Route path="/reference" element={<Reference />} />
