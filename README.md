@@ -16,8 +16,13 @@ bomb — all of which this project implements in full.
   - The full bomb hierarchy: 4–10 of a kind, straight flush, and the four-joker bomb.
   - Tribute / return / anti-tribute between hands, and level-advancement scoring.
   - Legal-move generation (used by both the AI and the in-game Hint).
-- **AI opponents** (`src/ai/`) — heuristic bots at **Easy / Medium / Hard**. They conserve control
-  cards, manage bombs, cooperate with their partner, and bomb opponents who are about to finish.
+- **AI opponents** (`src/ai/`):
+  - **Easy / Medium / Hard** — heuristic bots that conserve control cards, manage bombs, cooperate
+    with their partner, and bomb opponents who are about to finish.
+  - **Master** — a much stronger policy that **counts every played card** (so it knows which of its
+    own cards are guaranteed winners), **decomposes its hand** to plan the fewest plays to empty it,
+    does **1-ply lookahead** scoring the hand it would be left with, hoards control/bombs for tempo,
+    and bombs to deny your run. In self-play it beats Hard ~20/20. Expect a real fight.
 - **Learn track** (`src/learn/`) — 15 lessons grouped Basics → Combinations → Bombs → Levels &
   Wilds → Strategy. Each lesson ends with an **interactive drill validated by the real engine**, or
   a quiz. Progress is saved in `localStorage`.

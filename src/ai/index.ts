@@ -1,10 +1,7 @@
-// ai/index.ts — heuristic Guandan bots (Easy / Medium / Hard). Pure: depends only on the
-// engine. Each bot returns the action to take for the seat whose turn it is.
-//
-// Design: all difficulties share one decision skeleton (go out if you can, don't overtake your
-// partner, lead low & keep bombs, bomb to stop an opponent who's about to finish). Difficulty
-// is a small set of knobs controlling how greedily control cards are spent and how eagerly bombs
-// are used.
+// ai/index.ts — Guandan bots. Easy / Medium / Hard share one heuristic skeleton (go out if you
+// can, don't overtake your partner, lead low & keep bombs, bomb to stop an opponent who's about
+// to finish), tuned by a few knobs. The "Master" tier is a separate, stronger policy that does
+// card counting and 1-ply lookahead (see ./master.ts).
 
 import {
   Card,
@@ -20,8 +17,9 @@ import {
   isWild,
   singleOrderValue,
 } from '../engine'
+import { chooseMasterMove } from './master'
 
-export type Difficulty = 'easy' | 'medium' | 'hard'
+export type Difficulty = 'easy' | 'medium' | 'hard' | 'master'
 
 export type AiAction =
   | { type: 'play'; combo: Combination }
@@ -38,7 +36,7 @@ interface Knobs {
   keepShape: boolean
 }
 
-const KNOBS: Record<Difficulty, Knobs> = {
+const KNOBS: Record<Exclude<Difficulty, 'master'>, Knobs> = {
   easy: { conserve: false, bombStop: 0, cooperate: true, keepShape: false },
   medium: { conserve: true, bombStop: 4, cooperate: true, keepShape: true },
   hard: { conserve: true, bombStop: 7, cooperate: true, keepShape: true },
@@ -169,6 +167,7 @@ export function chooseMove(
   seat: Seat,
   difficulty: Difficulty,
 ): AiAction {
+  if (difficulty === 'master') return chooseMasterMove(state, seat)
   const k = KNOBS[difficulty]
   if (state.trick.current === null) return chooseLead(state, seat, k)
   return chooseFollow(state, seat, k)

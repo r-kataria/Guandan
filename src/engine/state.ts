@@ -56,6 +56,7 @@ export interface GameState {
   teamLevels: Record<Team, NaturalRank>
   hands: Record<Seat, Card[]>
   finished: Seat[] // finish order so far (index 0 = first out)
+  played: Card[] // public log of every card played so far this hand (for card counting)
   trick: TrickState
   lastTribute: TributePlan | null
   prevFinishOrder: Seat[] | null
@@ -130,6 +131,7 @@ function startHand(
     teamLevels,
     hands,
     finished: [],
+    played: [],
     trick: {
       current: null,
       leader: firstLeader,
@@ -219,6 +221,7 @@ function applyPlay(state: GameState, seat: Seat, combo: Combination): GameState 
     ...state,
     hands,
     finished,
+    played: [...state.played, ...combo.cards],
     trick: {
       current: combo,
       leader: state.trick.leader,
