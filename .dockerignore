@@ -1,0 +1,12 @@
+node_modules
+dist
+dist-server
+.git
+.github
+*.log
+coverage
+.vite
+.DS_Store
+*.tsbuildinfo
+npm-debug.log*
+.claude

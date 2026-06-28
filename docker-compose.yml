@@ -1,0 +1,20 @@
+# Single-service deploy (works with `docker compose up` and with Coolify's Compose deploys).
+# One container serves the built client and the WebSocket game server on the same port.
+services:
+  guandan:
+    build: .
+    # Coolify sets the routing port from EXPOSE/this mapping. Change the host port if needed.
+    ports:
+      - "8787:8787"
+    environment:
+      - PORT=8787
+      # Bot pacing (ms) — optional. Lower = faster bots.
+      - GD_BOT_DELAY=900
+      - GD_HAND_DELAY=4500
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8787/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

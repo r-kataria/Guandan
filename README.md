@@ -54,9 +54,32 @@ For the **Online** tab to work you need the game server running too:
 
 - **Dev:** `npm run dev:all` runs Vite (port 5173) and the server (port 8787) together; Vite
   proxies the WebSocket to the server. Test it with two browser tabs.
-- **Production / sharing:** `npm run build` then `npm run start` — the server serves the built
-  client *and* the WebSocket on a single port (`PORT`, default 8787). Deploy that one process to
-  any Node host (Render/Railway/Fly/a VPS) and friends can join over the internet by room code.
+- **Production / sharing:** `npm run build:all` then `npm run start:prod` — one Node process
+  serves the built client *and* the WebSocket on a single port (`PORT`, default 8787).
+
+## Deploy with Docker / Coolify
+
+The repo ships a multi-stage `Dockerfile` and a `docker-compose.yml`. The image builds the client
+and bundles the server into one self-contained Node process (no dev toolchain or `node_modules` in
+the runtime image) that serves the static client and the WebSocket on the **same port** — so
+WebSocket upgrades work through a reverse proxy with no extra config.
+
+```bash
+docker build -t guandan .
+docker run -p 8787:8787 guandan          # open http://localhost:8787
+# or:
+docker compose up --build
+```
+
+**Coolify:** create a new resource from this Git repo and choose either build pack:
+
+- **Dockerfile** — Coolify builds the `Dockerfile` as-is. Set the app's port to **8787** (it's the
+  `EXPOSE`d port); Coolify's proxy routes HTTP and the WebSocket to it on the same port.
+- **Docker Compose** — point Coolify at `docker-compose.yml`.
+
+Optional env vars: `PORT` (listen port), `GD_BOT_DELAY` / `GD_HAND_DELAY` (bot pacing in ms),
+`CLIENT_DIR` (override the static-client directory). A `/healthz` endpoint is provided for health
+checks. No database or external services are required — rooms are in-memory.
 
 ## Project layout
 

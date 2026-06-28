@@ -180,7 +180,9 @@ function handleLeave(clientId: string) {
 // ---- HTTP + static client ----
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
-const DIST = join(__dirname, '..', 'dist')
+// Where the built client lives. Defaults to ../dist relative to this file (works for both
+// `tsx server/index.ts` -> server/ and the bundled dist-server/index.mjs -> dist-server/).
+const DIST = process.env.CLIENT_DIR ? join(process.env.CLIENT_DIR) : join(__dirname, '..', 'dist')
 const MIME: Record<string, string> = {
   '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml',
   '.json': 'application/json', '.ico': 'image/x-icon', '.png': 'image/png',
