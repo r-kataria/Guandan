@@ -37,6 +37,7 @@ function PlayerSeat({ state, seat }: { state: GameState; seat: Seat }) {
   return (
     <div className={`seat ${POSITIONS[seat]} ${relationClass(seat)} ${isTurn ? 'turn' : ''}`}>
       <div className="avatar">
+        <span className="avatar-badge">{SEAT_NAMES[seat].charAt(0)}</span>
         <span className="dot" />
         {SEAT_NAMES[seat]}
         {finishedIdx >= 0 && <span className="badge done">#{finishedIdx + 1}</span>}
@@ -62,7 +63,7 @@ export function Table({ state, level }: { state: GameState; level: NaturalRank }
         {current && lastPlayer !== null ? (
           <>
             <div className="label">Current play</div>
-            <div className="pile">
+            <div className="pile pop" key={current.cards.map((c) => c.id).join(',')}>
               {current.cards.map((c) => (
                 <CardTile key={c.id} card={c} level={level} size="sm" />
               ))}

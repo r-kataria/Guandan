@@ -14,11 +14,12 @@ export function Hand({ cards, level, selected, hintIds = [], onToggle, interacti
   return (
     <div className="hand-area">
       <div className="hand-row">
-        {cards.map((c) => (
+        {cards.map((c, i) => (
           <CardTile
             key={c.id}
             card={c}
             level={level}
+            index={i}
             selectable={interactive}
             selected={selected.includes(c.id)}
             hinted={hintIds.includes(c.id)}

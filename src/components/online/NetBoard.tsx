@@ -97,9 +97,7 @@ export function NetBoard({ room }: { room: UseRoom }) {
             <button disabled={!isMyTurn || view.trick.current === null} onClick={room.pass}>Pass</button>
             <button className="ghost" disabled={!isMyTurn} onClick={doHint}>Hint</button>
             <button className="ghost" disabled={selected.length === 0} onClick={() => setSelected([])}>Clear</button>
-            {room.error ? (
-              <span className="err">{room.error}</span>
-            ) : preview ? (
+            {preview ? (
               <span className="preview">Will play: {comboKindLabel(preview.kind)}</span>
             ) : isMyTurn ? (
               <span className="preview">{view.trick.current ? 'Beat it with a higher combo, or pass.' : 'Select cards to lead.'}</span>

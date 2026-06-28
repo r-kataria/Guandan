@@ -38,6 +38,7 @@ export function NetTable({ view }: { view: PlayerView }) {
         return (
           <div key={seat} className={`seat ${pos} ${relation(seat)} ${isTurn ? 'turn' : ''}`}>
             <div className="avatar">
+              <span className="avatar-badge">{(info.name || '?').charAt(0).toUpperCase()}</span>
               <span className="dot" />
               {info.name}
               {!info.connected && info.kind === 'bot' && <span className="badge">bot</span>}
@@ -53,7 +54,7 @@ export function NetTable({ view }: { view: PlayerView }) {
         {current && lastPlayer !== null ? (
           <>
             <div className="label">Current play</div>
-            <div className="pile">
+            <div className="pile pop" key={current.cards.map((c) => c.id).join(',')}>
               {current.cards.map((c) => (
                 <CardTile key={c.id} card={c} level={view.level} size="sm" />
               ))}

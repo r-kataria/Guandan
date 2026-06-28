@@ -1,23 +1,48 @@
 import { Link } from 'react-router-dom'
+import { CardTile } from '../components/Card'
+import { buildCards } from '../learn/cards'
+
+const FAN = buildCards(['S10', 'HJ', 'DQ', 'CK', 'SA'])
+
+function HeroFan() {
+  const mid = (FAN.length - 1) / 2
+  return (
+    <div className="card-fan" aria-hidden>
+      {FAN.map((c, i) => {
+        const off = i - mid
+        return (
+          <CardTile
+            key={c.id}
+            card={c}
+            size="lg"
+            style={{ transform: `rotate(${off * 7}deg) translateY(${Math.abs(off) * 9}px)` }}
+          />
+        )
+      })}
+    </div>
+  )
+}
 
 export function Home() {
   return (
     <div className="container">
-      <div className="hero">
+      <div className="hero fade-up">
+        <div className="badge" style={{ marginBottom: '1rem' }}>4 players · 2 teams · 108 cards</div>
         <h1>
           Learn &amp; Play <span className="cn">掼蛋</span> Guandan
         </h1>
         <p>
-          Guandan is a four-player partnership card game from Jiangsu, China — a game of climbing
-          combinations, bombs, wild cards and team levels. Go from total beginner to confident
-          player with guided lessons and hands-on drills, then test yourself against AI opponents.
+          A four-player partnership card game from Jiangsu, China — climbing combinations, bombs,
+          wild cards and team levels. Learn it from zero, sharpen up against ruthless AI, and play
+          online with friends.
         </p>
+        <HeroFan />
         <div className="cta-row">
           <Link to="/learn">
             <button className="primary">Start learning →</button>
           </Link>
           <Link to="/play">
-            <button className="ghost">Jump into a game</button>
+            <button className="ghost">Play vs AI</button>
           </Link>
           <Link to="/online">
             <button className="ghost">Play online with friends</button>
@@ -27,7 +52,8 @@ export function Home() {
 
       <div className="grid-cards">
         <div className="feature">
-          <h3>📚 Zero → Pro lessons</h3>
+          <span className="ico">📚</span>
+          <h3>Zero → Pro lessons</h3>
           <p>
             Fifteen bite-size lessons unlock the game one idea at a time — ranks, pairs, straights,
             bombs, the level system, wild cards, tribute, and real strategy. Each ends with an
@@ -35,24 +61,28 @@ export function Home() {
           </p>
         </div>
         <div className="feature">
-          <h3>🤖 AI opponents</h3>
+          <span className="ico">🤖</span>
+          <h3>AI from gentle to brutal</h3>
           <p>
-            Play full games against three bots with Easy, Medium and Hard difficulty. They manage
-            bombs, conserve control cards, and cooperate with their partner — just like real players.
+            Four difficulties. The <b>Master</b> bot counts every card played, plans how to empty
+            its hand, hoards guaranteed winners, and bombs to deny your run — it plays like a strong
+            human.
           </p>
         </div>
         <div className="feature">
-          <h3>🧭 A coach at your side</h3>
+          <span className="ico">🌐</span>
+          <h3>Online rooms</h3>
+          <p>
+            Create a room, share the code, and play with 1–4 friends. Empty seats are filled by
+            bots, and with two players you're placed on opposite teams.
+          </p>
+        </div>
+        <div className="feature">
+          <span className="ico">🧭</span>
+          <h3>A coach at your side</h3>
           <p>
             A live coach panel explains what to think about on every turn, highlights legal moves,
             and offers hints — so you keep learning while you play.
-          </p>
-        </div>
-        <div className="feature">
-          <h3>📖 Full rules reference</h3>
-          <p>
-            Every combination, the complete bomb hierarchy, and the tribute and scoring rules are a
-            click away in the Reference whenever you need a refresher.
           </p>
         </div>
       </div>

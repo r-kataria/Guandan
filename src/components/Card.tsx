@@ -1,3 +1,4 @@
+import { CSSProperties } from 'react'
 import { Card as CardT, NaturalRank, rankLabel, suitLabel, isRed, isWild } from '../engine'
 import { buildCards } from '../learn/cards'
 
@@ -7,16 +8,19 @@ interface Props {
   selectable?: boolean
   selected?: boolean
   hinted?: boolean
-  size?: 'sm' | 'md'
+  size?: 'sm' | 'md' | 'lg'
+  index?: number
+  style?: CSSProperties
   onClick?: () => void
 }
 
 const SIZES = {
   sm: { cw: '34px', ch: '48px' },
   md: { cw: '50px', ch: '70px' },
+  lg: { cw: '62px', ch: '88px' },
 }
 
-export function CardTile({ card, level, selectable, selected, hinted, size = 'md', onClick }: Props) {
+export function CardTile({ card, level, selectable, selected, hinted, size = 'md', index, style: extraStyle, onClick }: Props) {
   const red = isRed(card)
   const wild = level !== undefined && isWild(card, level)
   const sz = SIZES[size]
@@ -33,11 +37,12 @@ export function CardTile({ card, level, selectable, selected, hinted, size = 'md
     .filter(Boolean)
     .join(' ')
 
-  const style = { ['--cw' as string]: sz.cw, ['--ch' as string]: sz.ch }
+  const style: Record<string, string | number> = { ['--cw']: sz.cw, ['--ch']: sz.ch, ...(extraStyle as object) }
+  if (index !== undefined) style['--i'] = index
 
   if (card.kind === 'joker') {
     return (
-      <div className={classes} style={style} onClick={onClick} title={card.joker === 'BIG' ? 'Big Joker' : 'Small Joker'}>
+      <div className={classes} style={style as CSSProperties} onClick={onClick} title={card.joker === 'BIG' ? 'Big Joker' : 'Small Joker'}>
         <div className="corner">{card.joker === 'BIG' ? '★' : '☆'}</div>
         <div className="pip">JOKER</div>
         <div className="corner bottom">{card.joker === 'BIG' ? '★' : '☆'}</div>
@@ -48,7 +53,7 @@ export function CardTile({ card, level, selectable, selected, hinted, size = 'md
   const r = rankLabel(card.rank)
   const s = suitLabel(card.suit)
   return (
-    <div className={classes} style={style} onClick={onClick} title={`${s}${r}${wild ? ' (wild)' : ''}`}>
+    <div className={classes} style={style as CSSProperties} onClick={onClick} title={`${s}${r}${wild ? ' (wild)' : ''}`}>
       <div className="corner">
         {r}
         <div>{s}</div>
