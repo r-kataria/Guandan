@@ -12,6 +12,8 @@ interface Props {
   index?: number
   style?: CSSProperties
   onClick?: () => void
+  onMouseEnter?: () => void
+  onMouseLeave?: () => void
 }
 
 const SIZES = {
@@ -20,7 +22,7 @@ const SIZES = {
   lg: { cw: '62px', ch: '88px' },
 }
 
-export function CardTile({ card, level, selectable, selected, hinted, size = 'md', index, style: extraStyle, onClick }: Props) {
+export function CardTile({ card, level, selectable, selected, hinted, size = 'md', index, style: extraStyle, onClick, onMouseEnter, onMouseLeave }: Props) {
   const red = isRed(card)
   const wild = level !== undefined && isWild(card, level)
   const sz = SIZES[size]
@@ -42,7 +44,7 @@ export function CardTile({ card, level, selectable, selected, hinted, size = 'md
 
   if (card.kind === 'joker') {
     return (
-      <div className={classes} style={style as CSSProperties} onClick={onClick} title={card.joker === 'BIG' ? 'Big Joker' : 'Small Joker'}>
+      <div className={classes} style={style as CSSProperties} onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} title={card.joker === 'BIG' ? 'Big Joker' : 'Small Joker'}>
         <div className="corner">{card.joker === 'BIG' ? '★' : '☆'}</div>
         <div className="pip">JOKER</div>
         <div className="corner bottom">{card.joker === 'BIG' ? '★' : '☆'}</div>
@@ -53,7 +55,7 @@ export function CardTile({ card, level, selectable, selected, hinted, size = 'md
   const r = rankLabel(card.rank)
   const s = suitLabel(card.suit)
   return (
-    <div className={classes} style={style as CSSProperties} onClick={onClick} title={`${s}${r}${wild ? ' (wild)' : ''}`}>
+    <div className={classes} style={style as CSSProperties} onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} title={`${s}${r}${wild ? ' (wild)' : ''}`}>
       <div className="corner">
         {r}
         <div>{s}</div>
