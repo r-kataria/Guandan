@@ -10,19 +10,30 @@ const DIFFS: { key: Difficulty; label: string; blurb: string }[] = [
 export function DifficultyPicker({
   value,
   onChange,
+  compact,
 }: {
   value: Difficulty
   onChange: (d: Difficulty) => void
+  compact?: boolean
 }) {
+  const seg = (
+    <div className="seg">
+      {DIFFS.map((d) => (
+        <button
+          key={d.key}
+          className={value === d.key ? 'on' : ''}
+          title={d.blurb}
+          onClick={() => onChange(d.key)}
+        >
+          {d.label}
+        </button>
+      ))}
+    </div>
+  )
+  if (compact) return seg
   return (
     <div>
-      <div className="seg">
-        {DIFFS.map((d) => (
-          <button key={d.key} className={value === d.key ? 'on' : ''} onClick={() => onChange(d.key)}>
-            {d.label}
-          </button>
-        ))}
-      </div>
+      {seg}
       <div className="kbd-hint">{DIFFS.find((d) => d.key === value)?.blurb}</div>
     </div>
   )

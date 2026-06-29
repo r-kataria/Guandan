@@ -1,5 +1,5 @@
 import { GameState, levelLabel } from '../engine'
-import { SEAT_NAMES } from './Table'
+import { SEAT_NAMES } from './game/parts'
 
 export function HandEndOverlay({ state, onNext }: { state: GameState; onNext: () => void }) {
   const r = state.results[state.results.length - 1]

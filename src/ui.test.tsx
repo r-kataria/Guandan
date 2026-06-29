@@ -22,13 +22,13 @@ describe('UI smoke', () => {
   })
 
   it('renders the Play page with the table and difficulty controls', () => {
-    renderAt('/play')
-    expect(screen.getByText('You')).toBeTruthy()
+    const { container } = renderAt('/play')
     expect(screen.getByText('Partner')).toBeTruthy()
     expect(screen.getByText('Easy')).toBeTruthy()
     expect(screen.getByText('Hard')).toBeTruthy()
-    // The human's hand should render 27 selectable cards on the first lead.
-    expect(screen.getByText(/level in play/i)).toBeTruthy()
+    expect(screen.getByText('Master')).toBeTruthy()
+    // The human's hand renders 27 cards on the first lead.
+    expect(container.querySelectorAll('.hand-row .card-tile').length).toBe(27)
   })
 
   it('renders the Online page with create/join room options', () => {

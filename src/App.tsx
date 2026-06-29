@@ -31,7 +31,7 @@ export function App() {
         </NavLink>
       </nav>
 
-      <main>
+      <main className="app-main">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/play" element={<Play />} />

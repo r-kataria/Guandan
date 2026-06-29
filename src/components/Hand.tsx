@@ -9,10 +9,11 @@ interface Props {
   hintIds?: string[]
   onToggle: (id: string) => void
   interactive: boolean
+  size?: 'md' | 'lg'
 }
 
-const CARD_W = 50 // must match the 'md' card width in Card.tsx
-const MAX_ADVANCE = 40 // px between card left edges when there's plenty of room
+const CARD_WIDTHS = { md: 50, lg: 62 }
+const MAX_ADVANCE = 46 // px between card left edges when there's plenty of room
 const GAP = 24 // extra space opened to the right of a raised card
 const LIFT_SELECTED = 26
 const LIFT_HOVER = 16
@@ -20,10 +21,11 @@ const LIFT_HOVER = 16
 // The hand is one row that always fits the available width: the per-card overlap is computed so
 // 27 cards never wrap. When a card is raised (hovered/selected) it lifts AND pushes the cards to
 // its right aside, so a raised card never hides a neighbour's rank index.
-export function Hand({ cards, level, selected, hintIds = [], onToggle, interactive }: Props) {
+export function Hand({ cards, level, selected, hintIds = [], onToggle, interactive, size = 'md' }: Props) {
   const [hovered, setHovered] = useState<string | null>(null)
   const wrapRef = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(0)
+  const CARD_W = CARD_WIDTHS[size]
 
   useEffect(() => {
     const el = wrapRef.current
@@ -61,6 +63,7 @@ export function Hand({ cards, level, selected, hintIds = [], onToggle, interacti
               key={c.id}
               card={c}
               level={level}
+              size={size}
               index={i}
               style={style}
               selectable={interactive}
