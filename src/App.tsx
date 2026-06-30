@@ -5,6 +5,7 @@ import { Online } from './pages/Online'
 import { Learn } from './pages/Learn'
 import { Lesson } from './pages/Lesson'
 import { Reference } from './pages/Reference'
+import { ThemeSwitcher } from './components/ThemeSwitcher'
 
 export function App() {
   return (
@@ -29,6 +30,7 @@ export function App() {
         <NavLink to="/reference" className={({ isActive }) => (isActive ? 'active' : '')}>
           Reference
         </NavLink>
+        <ThemeSwitcher />
       </nav>
 
       <main className="app-main">
