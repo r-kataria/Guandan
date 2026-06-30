@@ -2,6 +2,25 @@ import { useState } from 'react'
 import { UseRoom } from '../../net/useRoom'
 import { DifficultyPicker } from '../GameSetup'
 
+const TURN_OPTIONS: { secs: number; label: string }[] = [
+  { secs: 0, label: 'Off' },
+  { secs: 30, label: '30s' },
+  { secs: 60, label: '1 min' },
+  { secs: 120, label: '2 min' },
+]
+
+function TurnTimerPicker({ value, onChange }: { value: number; onChange: (s: number) => void }) {
+  return (
+    <div className="seg">
+      {TURN_OPTIONS.map((o) => (
+        <button key={o.secs} className={value === o.secs ? 'on' : ''} onClick={() => onChange(o.secs)}>
+          {o.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export function Lobby({ room, onCodeTap }: { room: UseRoom; onCodeTap?: () => void }) {
   const lobby = room.lobby!
   const [copied, setCopied] = useState(false)
@@ -57,6 +76,8 @@ export function Lobby({ room, onCodeTap }: { room: UseRoom; onCodeTap?: () => vo
           <h3>Host controls</h3>
           <p style={{ color: 'var(--muted)', marginTop: 0, fontSize: '0.88rem' }}>Bot difficulty for the empty seats:</p>
           <DifficultyPicker value={lobby.difficulty} onChange={room.setDifficulty} />
+          <p style={{ color: 'var(--muted)', margin: '1rem 0 0.4rem', fontSize: '0.88rem' }}>Turn timer (per player):</p>
+          <TurnTimerPicker value={lobby.turnSeconds} onChange={room.setTurnTimer} />
           <div style={{ display: 'flex', gap: '0.5rem', marginTop: 14 }}>
             <button className="primary" onClick={room.start}>Start game →</button>
             <button className="ghost" onClick={room.leave}>Leave</button>
@@ -65,7 +86,8 @@ export function Lobby({ room, onCodeTap }: { room: UseRoom; onCodeTap?: () => vo
       ) : (
         <div className="panel fade-up" style={{ marginTop: '1rem' }}>
           <p style={{ margin: 0 }}>
-            Waiting for the host to start the game… (bot difficulty: <b>{lobby.difficulty}</b>)
+            Waiting for the host to start the game… (bots: <b>{lobby.difficulty}</b>, turn timer:{' '}
+            <b>{lobby.turnSeconds === 0 ? 'off' : `${lobby.turnSeconds}s`}</b>)
           </p>
           <button className="ghost" style={{ marginTop: 10 }} onClick={room.leave}>Leave</button>
         </div>

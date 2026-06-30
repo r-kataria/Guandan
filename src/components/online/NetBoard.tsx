@@ -11,7 +11,19 @@ import {
 } from '../../engine'
 import { UseRoom } from '../../net/useRoom'
 import { Hand } from '../Hand'
-import { ScoreChip, SeatChip, YouChip, TrickPile, ActionBar, SeatPos, Relation } from '../game/parts'
+import { ScoreChip, SeatChip, YouChip, TrickPile, ActionBar, TributeBanner, SeatPos, Relation } from '../game/parts'
+
+/** Live seconds remaining until `endsAt` (epoch ms), or null. Ticks while active. */
+function useCountdown(endsAt: number | null): number | null {
+  const [, setTick] = useState(0)
+  useEffect(() => {
+    if (endsAt === null) return
+    const id = setInterval(() => setTick((t) => t + 1), 500)
+    return () => clearInterval(id)
+  }, [endsAt])
+  if (endsAt === null) return null
+  return Math.max(0, Math.ceil((endsAt - Date.now()) / 1000))
+}
 
 export function NetBoard({ room, onCodeTap }: { room: UseRoom; onCodeTap?: () => void }) {
   const view = room.view!
@@ -24,6 +36,7 @@ export function NetBoard({ room, onCodeTap }: { room: UseRoom; onCodeTap?: () =>
   const isMyTurn = inPlay && trick.toAct === me
 
   const [selected, setSelected] = useState<string[]>([])
+  const secondsLeft = useCountdown(inPlay ? view.turnEndsAt : null)
 
   useEffect(() => {
     setSelected([])
@@ -91,8 +104,11 @@ export function NetBoard({ room, onCodeTap }: { room: UseRoom; onCodeTap?: () =>
           isTurn={inPlay && trick.toAct === seat}
           isBot={view.seats[seat].kind === 'bot'}
           finishedRank={view.finished.indexOf(seat)}
+          secondsLeft={inPlay && trick.toAct === seat ? secondsLeft : null}
         />
       ))}
+
+      <TributeBanner plan={view.lastTribute} handNumber={view.handNumber} nameOf={(s) => view.seats[s].name} />
 
       <TrickPile
         combo={trick.current}
@@ -103,7 +119,7 @@ export function NetBoard({ room, onCodeTap }: { room: UseRoom; onCodeTap?: () =>
       />
 
       <div className="bottom-bar">
-        <YouChip name={view.seats[me].name} count={view.handCounts[me]} isTurn={isMyTurn} />
+        <YouChip name={view.seats[me].name} count={view.handCounts[me]} isTurn={isMyTurn} secondsLeft={isMyTurn ? secondsLeft : null} />
         <ActionBar
           isMyTurn={isMyTurn}
           canPlay={canPlay}

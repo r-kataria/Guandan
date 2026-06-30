@@ -1,6 +1,6 @@
 import { useGuandan, HUMAN_SEAT } from '../game/useGuandan'
 import { Seat, teamOf, levelLabel, comboKindLabel } from '../engine'
-import { ScoreChip, SeatChip, YouChip, TrickPile, ActionBar, SeatPos, Relation, SEAT_NAMES } from '../components/game/parts'
+import { ScoreChip, SeatChip, YouChip, TrickPile, ActionBar, TributeBanner, SeatPos, Relation, SEAT_NAMES } from '../components/game/parts'
 import { Hand } from '../components/Hand'
 import { DifficultyPicker } from '../components/GameSetup'
 import { HandEndOverlay, GameOverOverlay } from '../components/Overlays'
@@ -54,6 +54,8 @@ export function Play() {
           finishedRank={s.finished.indexOf(seat)}
         />
       ))}
+
+      <TributeBanner plan={s.lastTribute} handNumber={s.handNumber} nameOf={(seat) => SEAT_NAMES[seat]} />
 
       <TrickPile
         combo={trick.current}

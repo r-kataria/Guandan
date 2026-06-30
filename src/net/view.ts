@@ -10,7 +10,13 @@ const SEATS: Seat[] = [0, 1, 2, 3]
 export function redact(
   state: GameState,
   seat: Seat,
-  meta: { code: string; isHost: boolean; seats: Record<Seat, SeatPublic> },
+  meta: {
+    code: string
+    isHost: boolean
+    seats: Record<Seat, SeatPublic>
+    turnSeconds?: number
+    turnEndsAt?: number | null
+  },
 ): PlayerView {
   const handCounts = { 0: 0, 1: 0, 2: 0, 3: 0 } as Record<Seat, number>
   for (const s of SEATS) handCounts[s] = state.hands[s].length
@@ -37,5 +43,7 @@ export function redact(
     results: state.results,
     winnerTeam: state.winnerTeam,
     lastTribute: state.lastTribute,
+    turnSeconds: meta.turnSeconds ?? 0,
+    turnEndsAt: meta.turnEndsAt ?? null,
   }
 }

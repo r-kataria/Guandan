@@ -13,6 +13,7 @@ import {
   Seat,
   teamOf,
 } from '../engine'
+import { findHint } from '../engine'
 import { chooseMove, Difficulty } from '../ai'
 import { LobbyView, PlayerView, SeatPublic } from './protocol'
 import { redact } from './view'
@@ -38,6 +39,10 @@ export class GameRoom {
   private seatsMeta = {} as Record<Seat, SeatPublic>
   /** Hidden host advantage: host-team bots play Master, opponent bots play Easy. */
   private rigged = false
+  /** Per-turn time limit for human players (seconds); 0 = off. Host-configurable. */
+  turnSeconds = 0
+  /** Epoch ms when the current actor's turn auto-resolves (set by the transport). */
+  turnEndsAt: number | null = null
 
   constructor(code: string, difficulty: Difficulty = 'master') {
     this.code = code
@@ -79,6 +84,25 @@ export class GameRoom {
 
   setDifficulty(id: string, difficulty: Difficulty): void {
     if (id === this.hostId && !this.state) this.difficulty = difficulty
+  }
+
+  setTurnSeconds(id: string, seconds: number): void {
+    if (id === this.hostId) this.turnSeconds = Math.max(0, Math.min(600, Math.floor(seconds)))
+  }
+
+  /** Auto-resolve the current actor's turn on timeout: pass if possible, else lead the cheapest. */
+  timeoutAct(): boolean {
+    const state = this.state
+    if (!state || state.phase !== 'trickPlay') return false
+    const seat = state.trick.toAct
+    if (state.trick.current !== null) {
+      this.state = reduce(state, { type: 'pass', seat })
+      return true
+    }
+    const lead = findHint(state.hands[seat], null, state.level)
+    if (!lead) return false
+    this.state = reduce(state, { type: 'play', seat, combo: lead })
+    return true
   }
 
   /** Handle a member leaving/disconnecting. In-game seats are taken over by a bot. */
@@ -230,6 +254,7 @@ export class GameRoom {
       difficulty: this.difficulty,
       seats,
       humanCount: this.members.size,
+      turnSeconds: this.turnSeconds,
     }
   }
 
@@ -240,6 +265,8 @@ export class GameRoom {
       code: this.code,
       isHost: this.hostId === id,
       seats: this.seatsMeta,
+      turnSeconds: this.turnSeconds,
+      turnEndsAt: this.turnEndsAt,
     })
   }
 }

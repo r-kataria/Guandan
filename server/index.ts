@@ -12,7 +12,8 @@ import { WebSocketServer, WebSocket } from 'ws'
 import { GameRoom } from '../src/net/room'
 import { ClientMsg, ServerMsg, WS_PATH, DEFAULT_SERVER_PORT } from '../src/net/protocol'
 
-const BOT_DELAY_MS = Number(process.env.GD_BOT_DELAY ?? 900)
+// Bots pause ~15s per turn so play is easy to follow (override with GD_BOT_DELAY for tests/ops).
+const BOT_DELAY_MS = Number(process.env.GD_BOT_DELAY ?? 15000)
 const HAND_END_DELAY_MS = Number(process.env.GD_HAND_DELAY ?? 4500)
 
 interface ServerRoom {
@@ -20,6 +21,7 @@ interface ServerRoom {
   sockets: Map<string, WebSocket>
   botTimer: ReturnType<typeof setTimeout> | null
   handTimer: ReturnType<typeof setTimeout> | null
+  turnTimer: ReturnType<typeof setTimeout> | null
 }
 
 const rooms = new Map<string, ServerRoom>()
@@ -56,28 +58,49 @@ function broadcast(sr: ServerRoom) {
 function clearTimers(sr: ServerRoom) {
   if (sr.botTimer) clearTimeout(sr.botTimer)
   if (sr.handTimer) clearTimeout(sr.handTimer)
+  if (sr.turnTimer) clearTimeout(sr.turnTimer)
   sr.botTimer = null
   sr.handTimer = null
+  sr.turnTimer = null
 }
 
-/** Drive bots and auto-advance hands. */
+/** Set the active-turn deadline, broadcast it, and arm the next bot/hand/turn timer. */
 function schedule(sr: ServerRoom) {
   clearTimers(sr)
   const { room } = sr
-  if (!room.isInGame) return
+  if (!room.isInGame) {
+    room.turnEndsAt = null
+    return
+  }
+
   if (room.pendingBotSeat() !== null) {
+    room.turnEndsAt = Date.now() + BOT_DELAY_MS
+    broadcast(sr)
     sr.botTimer = setTimeout(() => {
-      if (room.stepBot()) {
-        broadcast(sr)
-        schedule(sr)
-      }
+      if (room.stepBot()) schedule(sr)
     }, BOT_DELAY_MS)
   } else if (room.needsHandAdvance()) {
+    room.turnEndsAt = null
+    broadcast(sr)
     sr.handTimer = setTimeout(() => {
       room.advanceHand()
-      broadcast(sr)
       schedule(sr)
     }, HAND_END_DELAY_MS)
+  } else if (room.state && room.state.phase === 'trickPlay') {
+    // A human's turn. Apply the per-turn timer if the host enabled one.
+    if (room.turnSeconds > 0) {
+      room.turnEndsAt = Date.now() + room.turnSeconds * 1000
+      broadcast(sr)
+      sr.turnTimer = setTimeout(() => {
+        if (room.timeoutAct()) schedule(sr)
+      }, room.turnSeconds * 1000)
+    } else {
+      room.turnEndsAt = null
+      broadcast(sr)
+    }
+  } else {
+    room.turnEndsAt = null
+    broadcast(sr)
   }
 }
 
@@ -92,7 +115,7 @@ function onMessage(clientId: string, ws: WebSocket, raw: string) {
   if (msg.t === 'create') {
     const code = genCode()
     const room = new GameRoom(code, msg.difficulty ?? 'master')
-    const sr: ServerRoom = { room, sockets: new Map(), botTimer: null, handTimer: null }
+    const sr: ServerRoom = { room, sockets: new Map(), botTimer: null, handTimer: null, turnTimer: null }
     room.addHuman(clientId, msg.name, true)
     sr.sockets.set(clientId, ws)
     rooms.set(code, sr)
@@ -124,34 +147,26 @@ function onMessage(clientId: string, ws: WebSocket, raw: string) {
       room.setDifficulty(clientId, msg.difficulty)
       broadcast(sr)
       break
+    case 'setTurnTimer':
+      room.setTurnSeconds(clientId, msg.seconds)
+      broadcast(sr)
+      break
     case 'start':
-      if (room.start(clientId)) {
-        broadcast(sr)
-        schedule(sr)
-      }
+      if (room.start(clientId)) schedule(sr)
       break
     case 'rematch':
-      if (room.start(clientId)) {
-        broadcast(sr)
-        schedule(sr)
-      }
+      if (room.start(clientId)) schedule(sr)
       break
     case 'play': {
       const err = room.play(clientId, msg.cardIds)
       if (err) send(ws, { t: 'error', message: err })
-      else {
-        broadcast(sr)
-        schedule(sr)
-      }
+      else schedule(sr)
       break
     }
     case 'pass': {
       const err = room.pass(clientId)
       if (err) send(ws, { t: 'error', message: err })
-      else {
-        broadcast(sr)
-        schedule(sr)
-      }
+      else schedule(sr)
       break
     }
     case 'rig':

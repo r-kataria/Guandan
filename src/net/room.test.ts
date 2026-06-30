@@ -128,6 +128,32 @@ describe('GameRoom', () => {
     expect(hostWins).toBeGreaterThanOrEqual(Math.ceil(N * 0.7))
   })
 
+  it('turn timer: host-only, and timeoutAct passes or leads', () => {
+    const room = new GameRoom('TIMR', 'easy')
+    room.addHuman('a', 'Host', true)
+    room.addHuman('b', 'Other')
+    room.setTurnSeconds('b', 60) // non-host ignored
+    expect(room.turnSeconds).toBe(0)
+    room.setTurnSeconds('a', 60)
+    expect(room.turnSeconds).toBe(60)
+
+    room.start('a', 'timer-seed')
+    // On an open lead, timeoutAct must play a legal lead (can't pass).
+    const seat = room.state!.trick.toAct
+    const before = room.state!.hands[seat].length
+    expect(room.state!.trick.current).toBeNull()
+    expect(room.timeoutAct()).toBe(true)
+    expect(room.state!.hands[seat].length).toBeLessThan(before)
+    expect(room.state!.trick.current).not.toBeNull()
+
+    // Now someone is following; timeoutAct should be able to pass.
+    const follower = room.state!.trick.toAct
+    const fBefore = room.state!.hands[follower].length
+    expect(room.timeoutAct()).toBe(true)
+    // Either passed (count unchanged) or went out via a legal beat — but a pass keeps the count.
+    expect(room.state!.hands[follower].length).toBeLessThanOrEqual(fBefore)
+  })
+
   it('secret rig: only the host can enable it', () => {
     const room = new GameRoom('GGGG', 'easy')
     room.addHuman('a', 'Host', true)

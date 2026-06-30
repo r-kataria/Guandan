@@ -28,6 +28,7 @@ export interface LobbyView {
   difficulty: Difficulty
   seats: LobbySeat[]
   humanCount: number
+  turnSeconds: number // per-turn time limit for humans; 0 = off
 }
 
 // ---- In-game per-seat view (opponents' hands are hidden) ----
@@ -61,6 +62,8 @@ export interface PlayerView {
   results: HandResult[]
   winnerTeam: Team | null
   lastTribute: TributePlan | null
+  turnSeconds: number // configured per-turn limit (0 = off)
+  turnEndsAt: number | null // epoch ms when the active player's turn auto-resolves, or null
 }
 
 // ---- Client -> Server ----
@@ -74,6 +77,7 @@ export type ClientMsg =
   | { t: 'pass' }
   | { t: 'rematch' }
   | { t: 'leave' }
+  | { t: 'setTurnTimer'; seconds: number }
   // Hidden host-only toggle: makes the host's bot partner play at Master while opponent bots play
   // at Easy. Never reflected in any broadcast view, so other players can't detect it.
   | { t: 'rig'; on: boolean }

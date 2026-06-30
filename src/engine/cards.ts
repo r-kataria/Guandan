@@ -67,6 +67,16 @@ export function isRed(card: Card): boolean {
   return card.suit === 'H' || card.suit === 'D'
 }
 
+/** Human-readable card name from a card id (e.g. "H10#1" -> "♥10", "JB#0" -> "Big Joker"). */
+export function cardLabelFromId(id: string): string {
+  const base = id.split('#')[0]
+  if (base === 'JB') return 'Big Joker'
+  if (base === 'JS') return 'Small Joker'
+  const suit = base[0] as Suit
+  const rank = Number(base.slice(1)) as NaturalRank
+  return `${SUIT_LABEL[suit]}${RANK_LABEL[rank]}`
+}
+
 /** Build a full 108-card Guandan deck: 2 copies of 52 cards + 2 big + 2 small jokers. */
 export function buildDeck(): Card[] {
   const deck: Card[] = []

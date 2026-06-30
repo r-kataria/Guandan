@@ -3,8 +3,36 @@ import { describe, it, expect, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { App } from './App'
+import { TributeBanner } from './components/game/parts'
 
 afterEach(cleanup)
+
+describe('TributeBanner', () => {
+  it('shows who paid and returned which cards', () => {
+    render(
+      <TributeBanner
+        plan={{
+          cancelled: false,
+          payments: [{ from: 1, to: 0, cardId: 'S14#0' }],
+          returns: [{ from: 0, to: 1, cardId: 'S3#0' }],
+          firstLeader: 1,
+        }}
+        handNumber={1}
+        nameOf={(s) => `P${s}`}
+      />,
+    )
+    expect(screen.getByText(/paid/i)).toBeTruthy()
+    expect(screen.getByText('♠A')).toBeTruthy() // S14 -> ♠A
+    expect(screen.getByText(/returned/i)).toBeTruthy()
+  })
+
+  it('renders nothing on the first hand', () => {
+    const { container } = render(
+      <TributeBanner plan={{ cancelled: true, payments: [], returns: [], firstLeader: 0 }} handNumber={0} nameOf={(s) => `P${s}`} />,
+    )
+    expect(container.querySelector('.tribute-banner')).toBeNull()
+  })
+})
 
 function renderAt(path: string) {
   return render(

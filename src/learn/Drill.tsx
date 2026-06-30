@@ -4,6 +4,7 @@ import {
   pickBest,
   canBeat,
   comboKindLabel,
+  sortHand,
   Combination,
 } from '../engine'
 import { CardTile } from '../components/Card'
@@ -106,7 +107,7 @@ function SelectRunner({ drill, onSolved }: { drill: SelectDrill; onSolved: () =>
         <div style={{ margin: '0.5rem 0' }}>
           <div className="kbd-hint">On the table ({comboKindLabel(currentCombo.kind)}):</div>
           <div className="card-row" style={{ gap: 4, marginTop: 4 }}>
-            {currentCombo.cards.map((c) => (
+            {sortHand(currentCombo.cards, drill.level).map((c) => (
               <CardTile key={c.id} card={c} level={drill.level} size="sm" />
             ))}
           </div>
