@@ -13,7 +13,7 @@ import { UseRoom } from '../../net/useRoom'
 import { Hand } from '../Hand'
 import { ScoreChip, SeatChip, YouChip, TrickPile, ActionBar, SeatPos, Relation } from '../game/parts'
 
-export function NetBoard({ room }: { room: UseRoom }) {
+export function NetBoard({ room, onCodeTap }: { room: UseRoom; onCodeTap?: () => void }) {
   const view = room.view!
   const me = view.youSeat
   const level = view.level
@@ -77,7 +77,7 @@ export function NetBoard({ room }: { room: UseRoom }) {
       />
 
       <div className="hud hud-tr">
-        <span className="room-pill">{view.code}</span>
+        <span className="room-pill" onClick={onCodeTap}>{view.code}</span>
         <button className="ghost" onClick={room.leave}>Leave</button>
       </div>
 

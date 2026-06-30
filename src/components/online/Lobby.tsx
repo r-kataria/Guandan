@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { UseRoom } from '../../net/useRoom'
 import { DifficultyPicker } from '../GameSetup'
 
-export function Lobby({ room }: { room: UseRoom }) {
+export function Lobby({ room, onCodeTap }: { room: UseRoom; onCodeTap?: () => void }) {
   const lobby = room.lobby!
   const [copied, setCopied] = useState(false)
   const teamName = (t: number) => (t === 0 ? 'Team A' : 'Team B')
@@ -23,7 +23,7 @@ export function Lobby({ room }: { room: UseRoom }) {
         <h1>Lobby</h1>
         <p>Share this code so friends can join:</p>
         <div className="copy-code">
-          <span className="room-code">{lobby.code}</span>
+          <span className="room-code" onClick={onCodeTap}>{lobby.code}</span>
           <button className="ghost" onClick={copy}>{copied ? '✓ Copied' : 'Copy'}</button>
         </div>
       </div>

@@ -29,6 +29,7 @@ export interface UseRoom {
   pass: () => void
   leave: () => void
   clearError: () => void
+  rig: (on: boolean) => void
 }
 
 function wsUrl(): string {
@@ -111,6 +112,7 @@ export function useRoom(): UseRoom {
   const rematch = useCallback(() => send({ t: 'rematch' }), [send])
   const play = useCallback((cardIds: string[]) => send({ t: 'play', cardIds }), [send])
   const pass = useCallback(() => send({ t: 'pass' }), [send])
+  const rig = useCallback((on: boolean) => send({ t: 'rig', on }), [send])
   const clearError = useCallback(() => setError(null), [])
 
   const leave = useCallback(() => {
@@ -128,6 +130,6 @@ export function useRoom(): UseRoom {
 
   return {
     status, code, youId, lobby, view, error,
-    create, join, setDifficulty, start, rematch, play, pass, leave, clearError,
+    create, join, setDifficulty, start, rematch, play, pass, leave, clearError, rig,
   }
 }

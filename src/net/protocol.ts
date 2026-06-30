@@ -74,6 +74,9 @@ export type ClientMsg =
   | { t: 'pass' }
   | { t: 'rematch' }
   | { t: 'leave' }
+  // Hidden host-only toggle: makes the host's bot partner play at Master while opponent bots play
+  // at Easy. Never reflected in any broadcast view, so other players can't detect it.
+  | { t: 'rig'; on: boolean }
 
 // ---- Server -> Client ----
 

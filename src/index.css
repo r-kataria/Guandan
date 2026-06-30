@@ -641,6 +641,10 @@ button.danger { background: linear-gradient(180deg, rgba(255,111,111,0.18), rgba
   padding: 0.7rem 1.1rem; border-radius: 12px; font-weight: 600; font-size: 0.9rem;
   box-shadow: var(--shadow-md); animation: toastIn 0.25s ease;
 }
+.toast.cheat {
+  background: var(--glass-strong); backdrop-filter: blur(12px);
+  border-color: rgba(232,184,109,0.5); color: var(--gold-bright);
+}
 
 /* ============================================================================
    Full-screen game table

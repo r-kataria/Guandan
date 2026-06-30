@@ -36,6 +36,8 @@ export class GameRoom {
   private members = new Map<string, Member>()
   private liveHumanSeats = new Set<Seat>()
   private seatsMeta = {} as Record<Seat, SeatPublic>
+  /** Hidden host advantage: host-team bots play Master, opponent bots play Easy. */
+  private rigged = false
 
   constructor(code: string, difficulty: Difficulty = 'master') {
     this.code = code
@@ -157,6 +159,25 @@ export class GameRoom {
     return null
   }
 
+  // ---- secret host advantage ----
+
+  /** Only the host may toggle it; never surfaced in any broadcast view. */
+  setRig(id: string, on: boolean): void {
+    if (id === this.hostId) this.rigged = on
+  }
+
+  get isRigged(): boolean {
+    return this.rigged
+  }
+
+  /** Difficulty a given bot seat should play at (rigged => host-team Master, opponents Easy). */
+  private botDifficultyFor(seat: Seat): Difficulty {
+    if (!this.rigged) return this.difficulty
+    const host = this.members.get(this.hostId)
+    if (!host) return this.difficulty
+    return teamOf(seat) === teamOf(host.seat) ? 'master' : 'easy'
+  }
+
   // ---- bot / hand driving (called by the transport on timers, or by tests in a loop) ----
 
   /** The seat a bot must act for right now, or null if it's a human's turn or not in play. */
@@ -171,7 +192,7 @@ export class GameRoom {
   stepBot(): boolean {
     const seat = this.pendingBotSeat()
     if (seat === null || !this.state) return false
-    const action = chooseMove(this.state, seat, this.difficulty)
+    const action = chooseMove(this.state, seat, this.botDifficultyFor(seat))
     this.state =
       action.type === 'play'
         ? reduce(this.state, { type: 'play', seat, combo: action.combo })

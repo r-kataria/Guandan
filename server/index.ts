@@ -154,6 +154,10 @@ function onMessage(clientId: string, ws: WebSocket, raw: string) {
       }
       break
     }
+    case 'rig':
+      // Hidden host-only toggle; intentionally no broadcast/acknowledgement.
+      room.setRig(clientId, msg.on)
+      break
     case 'leave':
       handleLeave(clientId)
       break

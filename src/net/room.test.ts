@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { GameRoom } from './room'
 import { generateLeadMoves, generateResponses, Seat } from '../engine'
+import { chooseMove } from '../ai'
 
 /** Drive a room to completion in-process (no timers): bots step instantly, humans auto-play. */
 function driveToEnd(room: GameRoom, humanBySeat: Partial<Record<Seat, string>>): {
@@ -90,6 +91,53 @@ describe('GameRoom', () => {
     room.addHuman('b', 'Bob')
     expect(room.start('b')).toBe(false) // non-host
     expect(room.start('a')).toBe(true)
+  })
+
+  it('secret rig: host team (Master partner) beats the nerfed opponents', () => {
+    // Simulate a strong host (Master policy at seat 0) with the displayed difficulty set to Easy.
+    // Without the rig the opponents would also be Easy; with it on, the host's partner is Master
+    // and opponents stay Easy — the host's team should win the clear majority.
+    let hostWins = 0
+    const N = 8
+    for (let i = 0; i < N; i++) {
+      const room = new GameRoom(`RIG${i}`, 'easy')
+      room.addHuman('h', 'Host', true) // seat 0, team 0
+      room.start('h', `rig-seed-${i}`)
+      room.setRig('h', true)
+      let guard = 0
+      while (room.state && room.state.phase !== 'gameOver') {
+        if (++guard > 500000) throw new Error('did not terminate')
+        if (room.needsHandAdvance()) {
+          room.advanceHand()
+          continue
+        }
+        if (room.pendingBotSeat() !== null) {
+          room.stepBot()
+          continue
+        }
+        // The host (seat 0) acts — play it with a strong policy to mimic a skilled owner.
+        const action = chooseMove(room.state, 0, 'master')
+        const err =
+          action.type === 'play'
+            ? room.play('h', action.combo.cards.map((c) => c.id))
+            : room.pass('h')
+        expect(err).toBeNull()
+      }
+      if (room.state!.winnerTeam === 0) hostWins++
+    }
+    expect(hostWins).toBeGreaterThanOrEqual(Math.ceil(N * 0.7))
+  })
+
+  it('secret rig: only the host can enable it', () => {
+    const room = new GameRoom('GGGG', 'easy')
+    room.addHuman('a', 'Host', true)
+    room.addHuman('b', 'Other')
+    room.setRig('b', true) // non-host ignored
+    expect(room.isRigged).toBe(false)
+    room.setRig('a', true)
+    expect(room.isRigged).toBe(true)
+    room.setRig('a', false)
+    expect(room.isRigged).toBe(false)
   })
 
   it('a solo host fills the other three seats with bots', () => {
