@@ -78,6 +78,8 @@ export type ClientMsg =
   | { t: 'rematch' }
   | { t: 'leave' }
   | { t: 'setTurnTimer'; seconds: number }
+  // Host-only: rearrange players across the four seats (teams are {0,2} vs {1,3}).
+  | { t: 'swapSeats'; from: Seat; to: Seat }
   // Hidden host-only toggle: makes the host's bot partner play at Master while opponent bots play
   // at Easy. Never reflected in any broadcast view, so other players can't detect it.
   | { t: 'rig'; on: boolean }

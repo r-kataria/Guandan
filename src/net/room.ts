@@ -90,6 +90,20 @@ export class GameRoom {
     if (id === this.hostId) this.turnSeconds = Math.max(0, Math.min(600, Math.floor(seconds)))
   }
 
+  /**
+   * Host-only, lobby-only: move whoever occupies `from` to `to` (swapping with any occupant).
+   * Teams are fixed by seat parity ({0,2} vs {1,3}), so rearranging seats sets the teams —
+   * including two humans as partners vs two bots.
+   */
+  swapSeats(id: string, from: Seat, to: Seat): void {
+    if (id !== this.hostId || this.state) return
+    if (![0, 1, 2, 3].includes(from) || ![0, 1, 2, 3].includes(to) || from === to) return
+    const a = this.memberBySeat(from)
+    const b = this.memberBySeat(to)
+    if (a) a.seat = to
+    if (b) b.seat = from
+  }
+
   /** Auto-resolve the current actor's turn on timeout: pass if possible, else lead the cheapest. */
   timeoutAct(): boolean {
     const state = this.state

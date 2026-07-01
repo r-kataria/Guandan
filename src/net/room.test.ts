@@ -128,6 +128,36 @@ describe('GameRoom', () => {
     expect(hostWins).toBeGreaterThanOrEqual(Math.ceil(N * 0.7))
   })
 
+  it('swapSeats: host can put two humans on the same team (partners vs bots)', () => {
+    const room = new GameRoom('SWAP', 'easy')
+    room.addHuman('a', 'Alice', true) // seat 0 (team 0)
+    room.addHuman('b', 'Bob') // seat 1 (team 1)
+
+    room.swapSeats('b', 1, 2) // non-host ignored
+    expect(room.lobbyView('a').seats.find((s) => s.seat === 1)!.kind).toBe('human')
+
+    room.swapSeats('a', 1, 2) // host moves Bob to seat 2 -> same team as Alice
+    const seats = room.lobbyView('a').seats
+    expect(seats.find((s) => s.seat === 2)!.name).toBe('Bob')
+    expect(seats.find((s) => s.seat === 1)!.kind).toBe('empty')
+
+    // Partners (seats 0 & 2) vs two bots — game must still run to completion.
+    room.start('a', 'swap-seed')
+    const { errors } = driveToEnd(room, { 0: 'a', 2: 'b' })
+    expect(errors).toEqual([])
+    expect(room.state!.phase).toBe('gameOver')
+  })
+
+  it('swapSeats: rejected once the game has started', () => {
+    const room = new GameRoom('SWP2', 'easy')
+    room.addHuman('a', 'Alice', true)
+    room.addHuman('b', 'Bob')
+    room.start('a')
+    room.swapSeats('a', 1, 2)
+    // Bob must still be on seat 1 (his hand is seat 1's).
+    expect(room.playerView('b')!.youSeat).toBe(1)
+  })
+
   it('turn timer: host-only, and timeoutAct passes or leads', () => {
     const room = new GameRoom('TIMR', 'easy')
     room.addHuman('a', 'Host', true)

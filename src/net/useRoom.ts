@@ -31,6 +31,7 @@ export interface UseRoom {
   clearError: () => void
   rig: (on: boolean) => void
   setTurnTimer: (seconds: number) => void
+  swapSeats: (from: number, to: number) => void
 }
 
 function wsUrl(): string {
@@ -115,6 +116,10 @@ export function useRoom(): UseRoom {
   const pass = useCallback(() => send({ t: 'pass' }), [send])
   const rig = useCallback((on: boolean) => send({ t: 'rig', on }), [send])
   const setTurnTimer = useCallback((seconds: number) => send({ t: 'setTurnTimer', seconds }), [send])
+  const swapSeats = useCallback(
+    (from: number, to: number) => send({ t: 'swapSeats', from: from as 0 | 1 | 2 | 3, to: to as 0 | 1 | 2 | 3 }),
+    [send],
+  )
   const clearError = useCallback(() => setError(null), [])
 
   const leave = useCallback(() => {
@@ -132,6 +137,6 @@ export function useRoom(): UseRoom {
 
   return {
     status, code, youId, lobby, view, error,
-    create, join, setDifficulty, start, rematch, play, pass, leave, clearError, rig, setTurnTimer,
+    create, join, setDifficulty, start, rematch, play, pass, leave, clearError, rig, setTurnTimer, swapSeats,
   }
 }

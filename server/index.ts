@@ -151,6 +151,10 @@ function onMessage(clientId: string, ws: WebSocket, raw: string) {
       room.setTurnSeconds(clientId, msg.seconds)
       broadcast(sr)
       break
+    case 'swapSeats':
+      room.swapSeats(clientId, msg.from, msg.to)
+      broadcast(sr)
+      break
     case 'start':
       if (room.start(clientId)) schedule(sr)
       break

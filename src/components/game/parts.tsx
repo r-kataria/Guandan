@@ -74,6 +74,40 @@ function TimerBadge({ secondsLeft }: { secondsLeft?: number | null }) {
   return <span className={`timer-badge ${secondsLeft <= 5 ? 'low' : ''}`}>{secondsLeft}s</span>
 }
 
+/** Chess.com-style player capsule: avatar block, name, live card count, timer. */
+function Capsule({
+  name,
+  sub,
+  isTurn,
+  isBot,
+  finishedRank,
+  secondsLeft,
+}: {
+  name: string
+  sub: string
+  isTurn: boolean
+  isBot?: boolean
+  finishedRank?: number
+  secondsLeft?: number | null
+}) {
+  return (
+    <div className={`capsule ${isTurn ? 'turn' : ''}`}>
+      <span className="cap-av">{(name || '?').charAt(0).toUpperCase()}</span>
+      <span className="cap-main">
+        <span className="cap-name">
+          {name}
+          {isBot && <span className="badge">bot</span>}
+          {finishedRank !== undefined && finishedRank >= 0 && (
+            <span className="badge done">#{finishedRank + 1}</span>
+          )}
+        </span>
+        <span className="cap-sub seat-count">{sub}</span>
+      </span>
+      {isTurn && <TimerBadge secondsLeft={secondsLeft} />}
+    </div>
+  )
+}
+
 export function SeatChip({
   pos,
   name,
@@ -95,17 +129,15 @@ export function SeatChip({
 }) {
   return (
     <div className={`seat2 ${pos} ${relation} ${isTurn ? 'turn' : ''}`}>
-      <div className="who">
-        <span className="avatar-badge">{(name || '?').charAt(0).toUpperCase()}</span>
-        <span>{name}</span>
-        {isBot && <span className="badge">bot</span>}
-        {finishedRank !== undefined && finishedRank >= 0 && (
-          <span className="badge done">#{finishedRank + 1}</span>
-        )}
-        {isTurn && <TimerBadge secondsLeft={secondsLeft} />}
-      </div>
+      <Capsule
+        name={name}
+        sub={`${count} cards`}
+        isTurn={isTurn}
+        isBot={isBot}
+        finishedRank={finishedRank}
+        secondsLeft={secondsLeft}
+      />
       <MiniFan count={count} />
-      <div className="seat-count">{count} cards</div>
     </div>
   )
 }
@@ -122,12 +154,8 @@ export function YouChip({
   secondsLeft?: number | null
 }) {
   return (
-    <div className={`you-chip ${isTurn ? 'turn' : ''}`}>
-      <span className="avatar-badge">{(name || 'Y').charAt(0).toUpperCase()}</span>
-      <span>
-        {name} <span className="sub">· {count} cards</span>
-      </span>
-      {isTurn && <TimerBadge secondsLeft={secondsLeft} />}
+    <div className={`you-chip2 me ${isTurn ? 'turn' : ''}`}>
+      <Capsule name={name} sub={`${count} cards · you`} isTurn={isTurn} secondsLeft={secondsLeft} />
     </div>
   )
 }

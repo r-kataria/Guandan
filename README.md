@@ -30,9 +30,13 @@ bomb — all of which this project implements in full.
   hints.
 - **Rules reference** — every combination, the bomb order, and the tribute/scoring rules in one
   page.
-- **Themes** — switch between **Classic** (emerald felt & gold), **Elegant** (clean light), and
-  **Futuristic** (neon glass) from the nav; the choice is saved locally. Driven entirely by CSS
-  variables (`src/theme.ts` + `[data-theme]` blocks in `src/index.css`).
+- **Themes** — switch between **Classic** (emerald felt & gold, Sora), **Elegant** (clean light,
+  Playfair serif, pill geometry, linen texture, gold-lattice card backs), and **Futuristic**
+  (neon glass, Rajdhani, holo-grid table, circuit card backs) from the nav; each theme changes
+  typography, geometry, textures and card backs — not just colours. Saved locally and driven by
+  CSS variables (`src/theme.ts` + `[data-theme]` blocks in `src/index.css`).
+- **Team setup** — in the online lobby the host drags names between seats (or taps two seats) to
+  arrange teams, including two humans as partners vs two bots.
 - **Online multiplayer** (`server/` + `src/net/`) — create or join a room by code and play with
   1–4 real people; empty seats are filled by bots. With two players they're placed on opposite
   teams. A small Node + WebSocket server runs the authoritative game (reusing the same engine and

@@ -24,7 +24,9 @@ function TurnTimerPicker({ value, onChange }: { value: number; onChange: (s: num
 export function Lobby({ room, onCodeTap }: { room: UseRoom; onCodeTap?: () => void }) {
   const lobby = room.lobby!
   const [copied, setCopied] = useState(false)
-  const teamName = (t: number) => (t === 0 ? 'Team A' : 'Team B')
+  // Seat rearranging (host only): drag a card onto another, or tap one then tap the other.
+  const [dragFrom, setDragFrom] = useState<number | null>(null)
+  const [tapFrom, setTapFrom] = useState<number | null>(null)
 
   const copy = async () => {
     try {
@@ -34,6 +36,59 @@ export function Lobby({ room, onCodeTap }: { room: UseRoom; onCodeTap?: () => vo
     } catch {
       /* clipboard blocked — the code is shown on screen anyway */
     }
+  }
+
+  const doSwap = (from: number, to: number) => {
+    if (from !== to) room.swapSeats(from, to)
+    setDragFrom(null)
+    setTapFrom(null)
+  }
+
+  const onTapSeat = (seat: number) => {
+    if (!lobby.isHost) return
+    if (tapFrom === null) setTapFrom(seat)
+    else doSwap(tapFrom, seat)
+  }
+
+  const bySeat = (n: number) => lobby.seats.find((s) => s.seat === n)!
+
+  const SeatCard = ({ seatNo }: { seatNo: number }) => {
+    const s = bySeat(seatNo)
+    const draggable = lobby.isHost
+    return (
+      <div
+        className={[
+          'lobby-seat',
+          `t${s.team}`,
+          s.kind === 'empty' ? 'empty' : '',
+          draggable ? 'draggable' : '',
+          tapFrom === s.seat ? 'picked' : '',
+          dragFrom !== null && dragFrom !== s.seat ? 'droppable' : '',
+        ].join(' ')}
+        draggable={draggable}
+        onDragStart={(e) => {
+          setDragFrom(s.seat)
+          e.dataTransfer.effectAllowed = 'move'
+        }}
+        onDragEnd={() => setDragFrom(null)}
+        onDragOver={(e) => {
+          if (dragFrom !== null) e.preventDefault()
+        }}
+        onDrop={(e) => {
+          e.preventDefault()
+          if (dragFrom !== null) doSwap(dragFrom, s.seat)
+        }}
+        onClick={() => onTapSeat(s.seat)}
+      >
+        {draggable && <span className="drag-grip" aria-hidden>⋮⋮</span>}
+        <span className="avatar-badge">{s.kind === 'human' ? (s.name || '?').charAt(0).toUpperCase() : '🤖'}</span>
+        <span>
+          <b>{s.kind === 'human' ? s.name : 'Bot'}</b>
+          {s.you && <span className="badge" style={{ marginLeft: 6 }}>you</span>}
+        </span>
+        <span className="role">{s.kind === 'human' ? 'player' : 'fills on start'}</span>
+      </div>
+    )
   }
 
   return (
@@ -48,26 +103,26 @@ export function Lobby({ room, onCodeTap }: { room: UseRoom; onCodeTap?: () => vo
       </div>
 
       <div className="panel fade-up">
-        <h3>Seats &amp; teams</h3>
-        <div className="lobby-seats">
-          {lobby.seats.map((s) => (
-            <div key={s.seat} className={`lobby-seat t${s.team} ${s.kind === 'empty' ? 'empty' : ''}`}>
-              <span className="avatar-badge">{s.kind === 'human' ? (s.name || '?').charAt(0).toUpperCase() : '🤖'}</span>
-              <span>
-                <b>{s.kind === 'human' ? s.name : 'Bot'}</b>
-                {s.you && <span className="badge" style={{ marginLeft: 6 }}>you</span>}
-              </span>
-              <span className="role">
-                {teamName(s.team)}
-                <br />
-                {s.kind === 'human' ? 'player' : 'fills on start'}
-              </span>
-            </div>
-          ))}
+        <h3>Teams</h3>
+        <div className="team-cols">
+          <div className="team-col">
+            <div className="team-head a">Team A</div>
+            <SeatCard seatNo={0} />
+            <SeatCard seatNo={2} />
+          </div>
+          <div className="team-vs">vs</div>
+          <div className="team-col">
+            <div className="team-head b">Team B</div>
+            <SeatCard seatNo={1} />
+            <SeatCard seatNo={3} />
+          </div>
         </div>
         <p className="kbd-hint">
-          Partners sit opposite (seats across the table share a team). {lobby.humanCount} human
-          {lobby.humanCount === 1 ? '' : 's'} so far — the rest become bots when the game starts.
+          {lobby.isHost
+            ? 'Drag a name onto another seat to swap (or tap one, then the other). Two humans on the same team play together vs two bots.'
+            : 'The host arranges the teams.'}{' '}
+          {lobby.humanCount} human{lobby.humanCount === 1 ? '' : 's'} so far — empty seats become bots
+          when the game starts.
         </p>
       </div>
 
