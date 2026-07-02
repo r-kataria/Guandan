@@ -45,7 +45,10 @@ function renderAt(path: string) {
 describe('UI smoke', () => {
   it('renders the home page', () => {
     renderAt('/')
-    expect(screen.getByText(/Learn & Play/i)).toBeTruthy()
+    expect(screen.getByText('Climb.')).toBeTruthy()
+    expect(screen.getByText('Conquer.')).toBeTruthy()
+    expect(screen.getByText(/Three ways to play/i)).toBeTruthy()
+    expect(screen.getByText(/Meet the Master/i)).toBeTruthy()
     expect(screen.getAllByText(/Guandan/i).length).toBeGreaterThan(0)
   })
 
