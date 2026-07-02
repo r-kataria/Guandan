@@ -6,6 +6,7 @@ import { Learn } from './pages/Learn'
 import { Lesson } from './pages/Lesson'
 import { Reference } from './pages/Reference'
 import { ThemeSwitcher } from './components/ThemeSwitcher'
+import { SoundToggle } from './components/SoundToggle'
 
 export function App() {
   return (
@@ -31,6 +32,7 @@ export function App() {
           Reference
         </NavLink>
         <ThemeSwitcher />
+        <SoundToggle />
       </nav>
 
       <main className="app-main">

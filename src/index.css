@@ -692,6 +692,25 @@ button.danger { background: linear-gradient(180deg, rgba(255,111,111,0.18), rgba
 .turn-banner { font-weight: 700; padding: 0.45rem 0.9rem; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--hairline); display: inline-block; }
 .turn-banner.you { background: linear-gradient(180deg, var(--gold-bright), var(--gold)); color: #2a1c06; border-color: transparent; box-shadow: 0 4px 14px rgba(232,184,109,0.35); animation: turnPulse 1.8s ease-in-out infinite; }
 
+/* ---------- Stats strip (home) ---------- */
+.stats-strip {
+  display: inline-flex; gap: 1.6rem; margin: 1.2rem auto 0;
+  background: var(--panel); border: 1px solid var(--hairline); border-radius: 14px;
+  padding: 0.7rem 1.4rem; backdrop-filter: blur(8px);
+}
+.stats-strip .stat { display: flex; flex-direction: column; align-items: center; line-height: 1.2; }
+.stats-strip .stat b { font-family: var(--font-display); font-size: 1.25rem; color: var(--gold-bright); }
+.stats-strip .stat span { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
+
+/* ---------- Keyboard hints / sound toggle ---------- */
+.kbd-keys { font-size: 0.7rem; color: var(--faint); margin-top: 2px; }
+.kbd-keys kbd {
+  font-family: var(--font); font-size: 0.66rem; font-weight: 700;
+  background: rgba(255,255,255,0.07); border: 1px solid var(--hairline);
+  border-radius: 4px; padding: 0 4px; color: var(--muted);
+}
+.sound-toggle { padding: 0.35rem 0.55rem; font-size: 0.95rem; line-height: 1; }
+
 /* ---------- Toast ---------- */
 .toast-wrap { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); z-index: 80; display: flex; flex-direction: column; gap: 8px; align-items: center; }
 .toast {
@@ -838,6 +857,28 @@ button.danger { background: linear-gradient(180deg, rgba(255,111,111,0.18), rgba
 }
 .trick2 .pile { display: flex; gap: 4px; justify-content: center; }
 .trick2 .pile.pop { animation: pilePop 0.3s cubic-bezier(.2,.9,.3,1.2); }
+/* Cards fly in from the direction of whoever played them */
+.trick2 .pile.fly-none { animation: pilePop 0.3s cubic-bezier(.2,.9,.3,1.2); }
+.trick2 .pile.fly-top { animation: flyTop 0.38s cubic-bezier(.2,.85,.3,1.05); }
+.trick2 .pile.fly-left { animation: flyLeft 0.38s cubic-bezier(.2,.85,.3,1.05); }
+.trick2 .pile.fly-right { animation: flyRight 0.38s cubic-bezier(.2,.85,.3,1.05); }
+.trick2 .pile.fly-bottom { animation: flyBottom 0.38s cubic-bezier(.2,.85,.3,1.05); }
+/* Bombs land hard: pile flash + table ring shake */
+.trick2 .pile.bomb-play .card-tile { box-shadow: 0 0 0 2px var(--bad), 0 10px 30px rgba(255,80,80,0.35); }
+.trick2.bombed { animation: bombShake 0.45s cubic-bezier(.36,.07,.19,.97); }
+
+/* Level progression track (2 → A) */
+.level-track { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; margin: 0.8rem 0 0.3rem; }
+.lt-step {
+  width: 26px; height: 26px; border-radius: 8px;
+  display: grid; place-items: center;
+  font-size: 0.74rem; font-weight: 800; font-variant-numeric: tabular-nums;
+  background: rgba(255,255,255,0.05); border: 1px solid var(--hairline); color: var(--muted);
+}
+.lt-step.past { opacity: 0.5; }
+.lt-step.us { background: rgba(70,207,134,0.2); border-color: rgba(70,207,134,0.55); color: #8af0b8; box-shadow: 0 0 10px rgba(70,207,134,0.25); }
+.lt-step.them { background: rgba(255,111,111,0.18); border-color: rgba(255,111,111,0.5); color: #ff9f9f; }
+.lt-step.us.them { background: linear-gradient(135deg, rgba(70,207,134,0.25) 50%, rgba(255,111,111,0.22) 50%); }
 .trick2 .trick-meta { font-size: 0.8rem; color: #eafff4; opacity: 0.9; font-weight: 600; }
 .trick2 .trick-empty { font-size: 0.95rem; color: #d4ece0; opacity: 0.6; font-style: italic; }
 
@@ -879,6 +920,16 @@ button.danger { background: linear-gradient(180deg, rgba(255,111,111,0.18), rgba
 
 /* ---------- Animations ---------- */
 @keyframes turnPulse { 0%, 100% { box-shadow: 0 0 0 1px var(--gold), 0 0 18px rgba(232,184,109,0.3); } 50% { box-shadow: 0 0 0 1px var(--gold), 0 0 30px rgba(232,184,109,0.55); } }
+@keyframes flyTop { from { transform: translateY(-180px) scale(0.85); opacity: 0.2; } to { transform: translateY(0) scale(1); opacity: 1; } }
+@keyframes flyBottom { from { transform: translateY(180px) scale(0.85); opacity: 0.2; } to { transform: translateY(0) scale(1); opacity: 1; } }
+@keyframes flyLeft { from { transform: translateX(-260px) scale(0.85); opacity: 0.2; } to { transform: translateX(0) scale(1); opacity: 1; } }
+@keyframes flyRight { from { transform: translateX(260px) scale(0.85); opacity: 0.2; } to { transform: translateX(0) scale(1); opacity: 1; } }
+@keyframes bombShake {
+  10%, 90% { transform: translate(-51%, -50%); }
+  20%, 80% { transform: translate(-49%, -50%); }
+  30%, 50%, 70% { transform: translate(-52%, -49%); }
+  40%, 60% { transform: translate(-48%, -51%); }
+}
 @keyframes pilePop { from { transform: scale(0.82); opacity: 0.4; } to { transform: scale(1); opacity: 1; } }
 @keyframes dealIn { from { transform: translateY(26px) rotate(-4deg); opacity: 0; } to { transform: translateY(0) rotate(0); opacity: 1; } }
 @keyframes fadeUp { from { transform: translateY(14px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }

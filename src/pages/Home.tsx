@@ -1,6 +1,22 @@
 import { Link } from 'react-router-dom'
 import { CardTile } from '../components/Card'
 import { buildCards } from '../learn/cards'
+import { getStats } from '../stats'
+
+function StatsStrip() {
+  const s = getStats()
+  if (s.gamesPlayed === 0 && s.handsPlayed === 0) return null
+  const rate = s.gamesPlayed > 0 ? Math.round((s.gamesWon / s.gamesPlayed) * 100) : 0
+  return (
+    <div className="stats-strip fade-up">
+      <div className="stat"><b>{s.gamesPlayed}</b><span>games</span></div>
+      <div className="stat"><b>{s.gamesWon}</b><span>wins</span></div>
+      <div className="stat"><b>{rate}%</b><span>win rate</span></div>
+      <div className="stat"><b>{s.handsWon}</b><span>hands won</span></div>
+      <div className="stat"><b>{s.bestStreak}</b><span>best streak</span></div>
+    </div>
+  )
+}
 
 const FAN = buildCards(['S10', 'HJ', 'DQ', 'CK', 'SA'])
 
@@ -37,6 +53,7 @@ export function Home() {
           online with friends.
         </p>
         <HeroFan />
+        <StatsStrip />
         <div className="cta-row">
           <Link to="/learn">
             <button className="primary">Start learning →</button>

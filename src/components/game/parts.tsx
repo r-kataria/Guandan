@@ -210,19 +210,27 @@ export function TrickPile({
   leaderName,
   lastPlayerName,
   inPlay,
+  fromPos,
+  isBomb,
 }: {
   combo: Combination | null
   level: NaturalRank
   leaderName: string
   lastPlayerName: string | null
   inPlay: boolean
+  /** Which direction the last play came from — drives the fly-in animation. */
+  fromPos?: 'top' | 'left' | 'right' | 'bottom' | null
+  isBomb?: boolean
 }) {
   const cards = combo ? sortHand(combo.cards, level) : []
   return (
-    <div className="trick2">
+    <div className={`trick2 ${isBomb && combo ? 'bombed' : ''}`}>
       {combo && lastPlayerName ? (
         <>
-          <div className="pile pop" key={cards.map((c) => c.id).join(',')}>
+          <div
+            className={`pile fly-${fromPos ?? 'none'} ${isBomb ? 'bomb-play' : ''}`}
+            key={cards.map((c) => c.id).join(',')}
+          >
             {cards.map((c) => (
               <CardTile key={c.id} card={c} level={level} size="md" />
             ))}
@@ -234,6 +242,26 @@ export function TrickPile({
       ) : (
         <div className="trick-empty">{inPlay ? `${leaderName} to lead` : 'Hand over'}</div>
       )}
+    </div>
+  )
+}
+
+const LEVELS: NaturalRank[] = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+const LEVEL_LABELS: Record<number, string> = { 11: 'J', 12: 'Q', 13: 'K', 14: 'A' }
+
+/** The 2→A climb, with both teams' current positions marked. */
+export function LevelTrack({ usLevel, themLevel }: { usLevel: NaturalRank; themLevel: NaturalRank }) {
+  return (
+    <div className="level-track">
+      {LEVELS.map((l) => {
+        const us = l === usLevel
+        const them = l === themLevel
+        return (
+          <span key={l} className={`lt-step ${us ? 'us' : ''} ${them ? 'them' : ''} ${l < Math.max(usLevel, themLevel) && !us && !them ? 'past' : ''}`}>
+            {LEVEL_LABELS[l] ?? l}
+          </span>
+        )
+      })}
     </div>
   )
 }
@@ -278,6 +306,11 @@ export function ActionBar({
           Play
         </button>
       </div>
+      {isMyTurn && (
+        <div className="kbd-keys">
+          <kbd>↵</kbd> play · <kbd>P</kbd> pass · <kbd>C</kbd> clear{onHint && <> · <kbd>H</kbd> hint</>}
+        </div>
+      )}
     </div>
   )
 }

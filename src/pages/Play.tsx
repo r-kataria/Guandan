@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { useGuandan, HUMAN_SEAT } from '../game/useGuandan'
-import { Seat, teamOf, levelLabel, comboKindLabel } from '../engine'
+import { useGameFeedback } from '../game/feedback'
+import { Seat, teamOf, levelLabel, comboKindLabel, isBomb } from '../engine'
 import { ScoreChip, SeatChip, YouChip, TrickPile, ActionBar, TributeBanner, SeatPos, Relation, SEAT_NAMES } from '../components/game/parts'
 import { Hand } from '../components/Hand'
 import { DifficultyPicker } from '../components/GameSetup'
@@ -20,6 +22,31 @@ export function Play() {
   const them = US === 0 ? 1 : 0
   const trick = s.trick
   const inPlay = s.phase === 'trickPlay'
+  const lastResult = s.results[s.results.length - 1]
+
+  useGameFeedback({
+    phase: s.phase,
+    handNumber: s.handNumber,
+    comboKey: trick.current ? trick.current.cards.map((c) => c.id).join(',') : null,
+    comboIsBomb: trick.current ? isBomb(trick.current) : false,
+    isMyTurn: g.isHumanTurn,
+    wonHand: lastResult ? lastResult.winningTeam === US : null,
+    wonGame: s.winnerTeam !== null ? s.winnerTeam === US : null,
+  })
+
+  // Keyboard shortcuts: Enter = Play, P = Pass, C = Clear, H = Hint.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+      const k = e.key.toLowerCase()
+      if (k === 'enter' && g.canPlay) g.playSelected()
+      else if (k === 'p' && g.canPass) g.pass()
+      else if (k === 'c') g.clearSelection()
+      else if (k === 'h' && g.isHumanTurn) g.showHint()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [g])
 
   const previewLabel = g.preview
     ? `Will play: ${comboKindLabel(g.preview.kind)}`
@@ -63,6 +90,8 @@ export function Play() {
         leaderName={SEAT_NAMES[trick.leader]}
         lastPlayerName={trick.lastPlayer !== null ? SEAT_NAMES[trick.lastPlayer] : null}
         inPlay={inPlay}
+        fromPos={trick.lastPlayer !== null ? POS[trick.lastPlayer] : null}
+        isBomb={trick.current ? isBomb(trick.current) : false}
       />
 
       <div className="bottom-bar">

@@ -1,5 +1,5 @@
 import { GameState, levelLabel } from '../engine'
-import { SEAT_NAMES } from './game/parts'
+import { SEAT_NAMES, LevelTrack } from './game/parts'
 
 export function HandEndOverlay({ state, onNext }: { state: GameState; onNext: () => void }) {
   const r = state.results[state.results.length - 1]
@@ -17,7 +17,8 @@ export function HandEndOverlay({ state, onNext }: { state: GameState; onNext: ()
           {youWon ? 'Your team' : 'The opponents'} advanced <b>+{r.gain}</b> to level{' '}
           <b>{levelLabel(r.levelsAfter[r.winningTeam])}</b>.
         </p>
-        <button className="primary" onClick={onNext}>
+        <LevelTrack usLevel={state.teamLevels[0]} themLevel={state.teamLevels[1]} />
+        <button className="primary" style={{ marginTop: '0.8rem' }} onClick={onNext}>
           Next hand →
         </button>
       </div>
@@ -36,7 +37,8 @@ export function GameOverOverlay({ state, onNewGame }: { state: GameState; onNewG
             ? 'Your team reached level A and took first place. You are officially a Guandan player!'
             : 'The opponents reached A and won. Revisit the strategy lessons and rematch.'}
         </p>
-        <button className="primary" onClick={onNewGame}>
+        <LevelTrack usLevel={state.teamLevels[0]} themLevel={state.teamLevels[1]} />
+        <button className="primary" style={{ marginTop: '0.8rem' }} onClick={onNewGame}>
           New game
         </button>
       </div>

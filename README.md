@@ -37,6 +37,13 @@ bomb — all of which this project implements in full.
   CSS variables (`src/theme.ts` + `[data-theme]` blocks in `src/index.css`).
 - **Team setup** — in the online lobby the host drags names between seats (or taps two seats) to
   arrange teams, including two humans as partners vs two bots.
+- **Sound design** — synthesized card/pass/bomb/turn/win effects (Web Audio, zero assets) with a
+  persisted mute toggle in the nav.
+- **Table feel** — played cards fly in from the player's direction, bombs shake the table, and a
+  2→A level-progression track shows both teams' climb at every hand end.
+- **Player profile** — local lifetime stats (games, wins, win rate, hands won, best streak) shown
+  on the home page.
+- **Keyboard shortcuts** — Enter = play, P = pass, C = clear, H = hint.
 - **Online multiplayer** (`server/` + `src/net/`) — create or join a room by code and play with
   1–4 real people; empty seats are filled by bots. With two players they're placed on opposite
   teams. A small Node + WebSocket server runs the authoritative game (reusing the same engine and
