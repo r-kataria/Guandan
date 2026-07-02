@@ -219,6 +219,92 @@ function unseenCanBeatGroup(unseen: CardCounts, v: number, k: number, level: Nat
   return false
 }
 
+/** Can a bomb (any size) still be assembled from the unseen cards? */
+export function unseenBombPossible(unseen: CardCounts): boolean {
+  if (unseen.bigJ >= 2 && unseen.smallJ >= 2) return true
+  for (const r of ASC) {
+    const c = unseen.hist.get(r) ?? 0
+    if (c >= 1 && c + unseen.wilds >= 4) return true
+  }
+  return false
+}
+
+/** Can the unseen cards make `need` cards of each rank in some window of `len` with top > minTop? */
+function unseenCanBeatWindow(unseen: CardCounts, minTop: number, len: number, need: number): boolean {
+  for (let start = 2; start + len - 1 <= 14; start++) {
+    const top = start + len - 1
+    if (top <= minTop) continue
+    let deficit = 0
+    for (let r = start; r <= top; r++) {
+      const have = Math.min(need, unseen.hist.get(r as NaturalRank) ?? 0)
+      deficit += need - have
+    }
+    if (deficit <= unseen.wilds) return true
+  }
+  return false
+}
+
+export interface ComboLike {
+  kind: string
+  count: number
+  rank: number
+  bombLevel?: number
+}
+
+/**
+ * Can the unseen cards beat this combo with the SAME shape (ignoring bombs — check those with
+ * unseenBombPossible)? Conservative: returns true when construction is plausible.
+ */
+export function unseenCanBeatCombo(combo: ComboLike, unseen: CardCounts, level: NaturalRank): boolean {
+  switch (combo.kind) {
+    case 'jokerbomb':
+      return false
+    case 'single':
+      return maxUnseenSingle(unseen) > combo.rank ||
+        [...unseen.hist.entries()].some(([r, c]) => c >= 1 && rankValue(r, level) > combo.rank)
+    case 'pair':
+      return unseenCanBeatGroup(unseen, combo.rank, 2, level)
+    case 'triple':
+      return unseenCanBeatGroup(unseen, combo.rank, 3, level)
+    case 'fullhouse': {
+      // A stronger triple, plus enough leftover material for any pair.
+      if (!unseenCanBeatGroup(unseen, combo.rank, 3, level)) return false
+      const total = [...unseen.hist.values()].reduce((a, b) => a + b, 0) + unseen.wilds
+      return total >= 5
+    }
+    case 'straight':
+      return unseenCanBeatWindow(unseen, combo.rank, 5, 1)
+    case 'tube':
+      return unseenCanBeatWindow(unseen, combo.rank, 3, 2)
+    case 'plate':
+      return unseenCanBeatWindow(unseen, combo.rank, 2, 3)
+    case 'straightflush': {
+      // Suits aren't tracked in CardCounts — be conservative about higher straight flushes,
+      // and 6+-of-a-kind always beats a straight flush.
+      for (const [r, c] of unseen.hist) {
+        if (c >= 1 && c + unseen.wilds >= 6) return true
+        void r
+      }
+      return unseenCanBeatWindow(unseen, combo.rank, 5, 1)
+    }
+    case 'bomb': {
+      const size = combo.count
+      for (const [r, c] of unseen.hist) {
+        if (c < 1) continue
+        // Same size, higher rank — or any strictly larger bomb.
+        if (c + unseen.wilds >= size && rankValue(r, level) > combo.rank) return true
+        if (c + unseen.wilds >= size + 1) return true
+      }
+      if (unseen.bigJ >= 2 && unseen.smallJ >= 2) return true
+      // Straight flush outranks 4- and 5-bombs; suits unknown, so stay conservative.
+      if (size <= 5 && unseenCanBeatWindow(unseen, 1, 5, 1)) return true
+      return false
+    }
+    default:
+      return true
+  }
+}
+
 /**
  * Build the full HandShape, using the unseen-card composition to decide which groups are "control"
  * (currently unbeatable by the same combination type — ignoring bombs, which are counted apart).

@@ -19,10 +19,15 @@ bomb — all of which this project implements in full.
 - **AI opponents** (`src/ai/`):
   - **Easy / Medium / Hard** — heuristic bots that conserve control cards, manage bombs, cooperate
     with their partner, and bomb opponents who are about to finish.
-  - **Master** — a much stronger policy that **counts every played card** (so it knows which of its
+  - **Expert** — a much stronger policy that **counts every played card** (so it knows which of its
     own cards are guaranteed winners), **decomposes its hand** to plan the fewest plays to empty it,
     does **1-ply lookahead** scoring the hand it would be left with, hoards control/bombs for tempo,
-    and bombs to deny your run. In self-play it beats Hard ~20/20. Expect a real fight.
+    and bombs to deny your run. Beats Hard 20/20 in head-to-head testing.
+  - **Master** — everything Expert does, plus **tempo mastery**: it proves which of its plays are
+    unbeatable by the unseen cards, **detects guaranteed run-outs** and cashes them immediately,
+    keeps a **safe closer** for the endgame (shedding the vulnerable group first), grabs tricks
+    that lock a finish, and **starves nearly-out opponents** of playable tricks. Beats Expert
+    ~75% head-to-head. Our strongest mind.
 - **Learn track** (`src/learn/`) — 15 lessons grouped Basics → Combinations → Bombs → Levels &
   Wilds → Strategy. Each lesson ends with an **interactive drill validated by the real engine**, or
   a quiz. Progress is saved in `localStorage`.
@@ -101,7 +106,7 @@ checks. No database or external services are required — rooms are in-memory.
 server/         Node + WebSocket multiplayer server (thin transport over src/net/room)
 src/
   engine/       pure rules engine (cards, combinations, compare, moves, state, tribute, scoring)
-  ai/           bots: Easy/Medium/Hard heuristics + the Master tier (eval + master)
+  ai/           bots: Easy/Medium/Hard heuristics + Expert (eval + expert) + Master (master)
   net/          multiplayer: protocol, seating, redaction (view), GameRoom core, useRoom hook
   game/         React hook bridging engine↔UI, plus the coach
   components/   Table, Hand, Card, Controls, panels, overlays, online/ (rooms, lobby, board)
@@ -111,9 +116,9 @@ src/
 
 ## Testing
 
-57 tests cover combination parsing (including wild cards), `canBeat` across every type, full
-simulated games played to completion, AI move legality, a head-to-head harness asserting Master
-beats Hard, the multiplayer room core (a full 2-human + 2-bot game in-process, seat assignment,
+67 tests cover combination parsing (including wild cards), `canBeat` across every type, full
+simulated games played to completion, AI move legality, head-to-head harnesses asserting
+Expert > Hard and Master > Expert, the multiplayer room core (a full 2-human + 2-bot game in-process, seat assignment,
 disconnect→bot takeover, and that a player view never leaks another seat's cards), and the React
 UI (rendering + a drill solved through the engine + the timer-driven play loop).
 

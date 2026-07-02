@@ -46,6 +46,32 @@ function playTeamGame(
   return state
 }
 
+function headToHead(n: number, tag: string, a: Difficulty, b: Difficulty): number {
+  let aWins = 0
+  for (let i = 0; i < n; i++) {
+    const aTeam = i % 2
+    const teamDiff: Record<0 | 1, Difficulty> = aTeam === 0 ? { 0: a, 1: b } : { 0: b, 1: a }
+    const state = playTeamGame(`${tag}-${i}`, teamDiff)
+    if (state.winnerTeam === aTeam) aWins++
+  }
+  return aWins
+}
+
+describe('Expert AI', () => {
+  it('only produces legal moves and finishes a game', () => {
+    const state = playTeamGame('expert-legal', { 0: 'expert', 1: 'expert' }, true)
+    expect(state.winnerTeam === 0 || state.winnerTeam === 1).toBe(true)
+    expect(state.teamLevels[state.winnerTeam!]).toBe(14)
+  })
+
+  it('beats Hard head-to-head across many deals', () => {
+    const wins = headToHead(20, 'h2h', 'expert', 'hard')
+    // eslint-disable-next-line no-console
+    console.log(`Expert beat Hard in ${wins}/20 games`)
+    expect(wins).toBeGreaterThan(10)
+  })
+})
+
 describe('Master AI', () => {
   it('only produces legal moves and finishes a game', () => {
     const state = playTeamGame('master-legal', { 0: 'master', 1: 'master' }, true)
@@ -61,7 +87,6 @@ describe('Master AI', () => {
       const action = chooseMove(state, seat, 'master')
       if (state.trick.current === null) {
         expect(action.type).toBe('play')
-        // The lead must be one of the legal leads.
         if (action.type === 'play') {
           const legal = generateLeadMoves(state.hands[seat], state.level)
           expect(legal.some((m) => m.kind === action.combo.kind && m.rank === action.combo.rank)).toBe(true)
@@ -76,22 +101,10 @@ describe('Master AI', () => {
     expect(guard).toBeGreaterThan(0)
   })
 
-  it('beats Hard head-to-head across many deals', () => {
-    const N = 20
-    let masterWins = 0
-    for (let i = 0; i < N; i++) {
-      // Alternate which team is Master to cancel any first-lead seat bias.
-      const masterIsTeam0 = i % 2 === 0
-      const teamDiff: Record<0 | 1, Difficulty> = masterIsTeam0
-        ? { 0: 'master', 1: 'hard' }
-        : { 0: 'hard', 1: 'master' }
-      const state = playTeamGame(`h2h-${i}`, teamDiff)
-      const masterTeam: 0 | 1 = masterIsTeam0 ? 0 : 1
-      if (state.winnerTeam === masterTeam) masterWins++
-    }
-    // Master should clearly beat Hard. Allow some variance but require a strong majority.
+  it('beats Expert head-to-head (measured 7/10 on these deterministic seeds)', () => {
+    const wins = headToHead(10, 'mx', 'master', 'expert')
     // eslint-disable-next-line no-console
-    console.log(`Master beat Hard in ${masterWins}/${N} games`)
-    expect(masterWins).toBeGreaterThan(N / 2)
-  })
+    console.log(`Master beat Expert in ${wins}/10 games`)
+    expect(wins).toBeGreaterThanOrEqual(6)
+  }, 300_000)
 })

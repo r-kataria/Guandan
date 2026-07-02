@@ -17,9 +17,10 @@ import {
   isWild,
   singleOrderValue,
 } from '../engine'
+import { chooseExpertMove } from './expert'
 import { chooseMasterMove } from './master'
 
-export type Difficulty = 'easy' | 'medium' | 'hard' | 'master'
+export type Difficulty = 'easy' | 'medium' | 'hard' | 'expert' | 'master'
 
 export type AiAction =
   | { type: 'play'; combo: Combination }
@@ -36,7 +37,7 @@ interface Knobs {
   keepShape: boolean
 }
 
-const KNOBS: Record<Exclude<Difficulty, 'master'>, Knobs> = {
+const KNOBS: Record<Exclude<Difficulty, 'expert' | 'master'>, Knobs> = {
   easy: { conserve: false, bombStop: 0, cooperate: true, keepShape: false },
   medium: { conserve: true, bombStop: 4, cooperate: true, keepShape: true },
   hard: { conserve: true, bombStop: 7, cooperate: true, keepShape: true },
@@ -168,6 +169,7 @@ export function chooseMove(
   difficulty: Difficulty,
 ): AiAction {
   if (difficulty === 'master') return chooseMasterMove(state, seat)
+  if (difficulty === 'expert') return chooseExpertMove(state, seat)
   const k = KNOBS[difficulty]
   if (state.trick.current === null) return chooseLead(state, seat, k)
   return chooseFollow(state, seat, k)

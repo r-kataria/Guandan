@@ -141,7 +141,7 @@ export function Home() {
           <Link to="/play" className="ld-mode featured">
             <span className="ld-mode-num">02</span>
             <h3>Play vs AI</h3>
-            <p>Four difficulty tiers ending at Master — a bot that counts every card and plays like a strong human.</p>
+            <p>Five difficulty tiers ending at Master — a bot that counts every card, locks in guaranteed finishes, and plays like a strong human.</p>
             <span className="ld-arrow">→</span>
           </Link>
           <Link to="/online" className="ld-mode">

@@ -1,7 +1,10 @@
-// ai/master.ts — the "Master" bot. Unlike the heuristic tiers, it reasons about the actual
-// consequence of each move: it does 1-ply lookahead on its own hand (scored with card-counting
-// awareness of what's still unseen), keeps tempo/control, cooperates with its partner, and
-// suppresses opponents who are about to go out.
+// ai/master.ts — the strongest bot. It keeps the Expert's disciplined core (cheap tricks stay
+// cheap; control cards are hoarded) and adds surgical upgrades where they win games:
+//   - guaranteed run-out detection: when every remaining group is unbeatable, cash out immediately
+//   - the safe-finisher technique: shed the vulnerable group first, keep an unbeatable closer
+//   - endgame tempo grabs: take a trick with a safe play when it locks a finish path
+//   - hard denial: refuses to feed an opponent who is nearly out, on leads and follows
+//   - purposeful cooperation: overtakes the partner only to convert a guaranteed win
 
 import {
   GameState,
@@ -19,139 +22,184 @@ import {
   computeUnseen,
   shapeFromUnseen,
   scoreHand,
+  unseenCanBeatCombo,
+  unseenBombPossible,
 } from './eval'
 import type { AiAction } from './index'
 
+/** Tuning knobs (exported for head-to-head experiments). */
+export const MASTER_TUNING = {
+  uncW: 0, // extra weight on uncontrolled groups when ranking moves (0 measured best)
+  closers: true, // safe-finisher lead planning at <=10 cards
+  tempoGrab: true, // take a trick when it locks a run-out
+  convert: true, // overtake partner to convert a locked run-out
+  denial: true, // starve near-out opponents (lead penalty + forced beats)
+}
+
 const partnerOf = (s: Seat): Seat => ((s + 2) % 4) as Seat
 
-function minOpponentCards(state: GameState, seat: Seat): number {
-  let min = Infinity
+interface Ctx {
+  state: GameState
+  seat: Seat
+  hand: Card[]
+  level: GameState['level']
+  unseen: CardCounts
+  oppMin: number
+  partnerCards: number | null
+  bombRisk: boolean
+}
+
+function makeCtx(state: GameState, seat: Seat): Ctx {
+  const unseen = computeUnseen(state.hands[seat], state.played, state.level)
+  let oppMin = Infinity
   for (const s of [0, 1, 2, 3] as Seat[]) {
     if (teamOf(s) !== teamOf(seat) && !state.finished.includes(s)) {
-      min = Math.min(min, state.hands[s].length)
+      oppMin = Math.min(oppMin, state.hands[s].length)
     }
   }
-  return min
-}
-
-function partnerActiveCards(state: GameState, seat: Seat): number | null {
   const p = partnerOf(seat)
-  if (state.finished.includes(p)) return null
-  return state.hands[p].length
+  return {
+    state,
+    seat,
+    hand: state.hands[seat],
+    level: state.level,
+    unseen,
+    oppMin,
+    partnerCards: state.finished.includes(p) ? null : state.hands[p].length,
+    bombRisk: unseenBombPossible(unseen),
+  }
 }
 
-/** Score of the hand that remains after playing `move` (lower is better; win = -1000). */
-function evalAfter(
-  hand: Card[],
-  move: Combination,
-  unseen: CardCounts,
-  level: GameState['level'],
-): number {
-  const remaining = removeCards(hand, move.cards)
-  if (remaining.length === 0) return -1000
-  return scoreHand(shapeFromUnseen(remaining, unseen, level))
+interface Scored {
+  move: Combination
+  cost: number // ranking key (includes structural bonuses/penalties)
+  raw: number // plain resulting-hand score, comparable with the pre-move baseline
+  uncAfter: number
+  isSafe: boolean
 }
 
-function chooseLead(state: GameState, seat: Seat, unseen: CardCounts): AiAction {
-  const hand = state.hands[seat]
-  const level = state.level
-  const moves = generateLeadMoves(hand, level)
+/** Expert-style cost of a move (lower is better), annotated with safety/run-out info. */
+function score(ctx: Ctx, m: Combination): Scored {
+  const remaining = removeCards(ctx.hand, m.cards)
+  const isSafe = !unseenCanBeatCombo(m, ctx.unseen, ctx.level)
+  if (remaining.length === 0) return { move: m, cost: -1000, raw: -1000, uncAfter: 0, isSafe }
+  const shape = shapeFromUnseen(remaining, ctx.unseen, ctx.level)
+  const uncAfter = Math.max(0, shape.plays - shape.control - shape.bombs)
+  const raw = scoreHand(shape)
+  let cost = raw + uncAfter * MASTER_TUNING.uncW
+  if (isBomb(m)) cost += 3
+  cost += m.wildCount * 0.6
+  cost += m.rank * 0.003
+  return { move: m, cost, raw, uncAfter, isSafe }
+}
+
+function best(list: Scored[]): Scored | null {
+  return list.length === 0 ? null : list.reduce((a, b) => (b.cost < a.cost ? b : a))
+}
+
+/** A finish path is locked: every remaining group after this move is unbeatable. */
+function locksRunOut(ctx: Ctx, s: Scored): boolean {
+  return s.isSafe && s.uncAfter === 0 && (!ctx.bombRisk || ctx.hand.length <= 8)
+}
+
+function chooseLead(ctx: Ctx): AiAction {
+  const moves = generateLeadMoves(ctx.hand, ctx.level)
   if (moves.length === 0) return { type: 'pass' }
 
-  // Win immediately if a single play empties the hand.
-  const finisher = moves.find((m) => m.count === hand.length)
+  const finisher = moves.find((m) => m.count === ctx.hand.length)
   if (finisher) return { type: 'play', combo: finisher }
 
-  // Cost of leading each move: the resulting hand, plus penalties for wasting bombs/wilds and a
-  // mild preference for leading low. (Leading away a control card hurts the resulting-hand score,
-  // so that's already discouraged.)
-  let best = moves[0]
-  let bestCost = Infinity
-  for (const m of moves) {
-    let cost = evalAfter(hand, m, unseen, level)
-    if (isBomb(m)) cost += 3
-    cost += m.wildCount * 0.6
-    cost += m.rank * 0.003 // tie-break: prefer leading lower
-    if (cost < bestCost) {
-      bestCost = cost
-      best = m
+  const scored = moves.map((m) => score(ctx, m))
+
+  // Guaranteed run-out: everything left is unbeatable — start cashing out.
+  const runouts = scored.filter((s) => locksRunOut(ctx, s))
+  if (runouts.length > 0) return { type: 'play', combo: best(runouts)!.move }
+
+  // Safe-finisher endgame: lead the vulnerable group now, keep an unbeatable closer.
+  if (MASTER_TUNING.closers && ctx.hand.length <= 10) {
+    const closers = scored.filter((s) => s.uncAfter === 0)
+    if (closers.length > 0) return { type: 'play', combo: best(closers)!.move }
+  }
+
+  // Denial: an opponent is nearly out — don't lead anything they can fit under.
+  if (MASTER_TUNING.denial && ctx.oppMin <= 2) {
+    for (const s of scored) {
+      if (s.move.count <= ctx.oppMin && !s.isSafe) s.cost += 4
     }
   }
-  return { type: 'play', combo: best }
+
+  return { type: 'play', combo: best(scored)!.move }
 }
 
-function chooseFollow(state: GameState, seat: Seat, unseen: CardCounts): AiAction {
-  const hand = state.hands[seat]
-  const level = state.level
+function chooseFollow(ctx: Ctx): AiAction {
+  const state = ctx.state
   const current = state.trick.current!
-  const responses = generateResponses(hand, current, level)
+  const responses = generateResponses(ctx.hand, current, ctx.level)
   if (responses.length === 0) return { type: 'pass' }
 
-  // Going out trumps everything else.
-  const finisher = responses.find((m) => m.count === hand.length)
+  const finisher = responses.find((m) => m.count === ctx.hand.length)
   if (finisher) return { type: 'play', combo: finisher }
 
-  // Cooperate: if our partner currently holds the trick, let them keep it.
+  const scored = responses.map((m) => score(ctx, m))
+  const nonBombs = scored.filter((s) => !isBomb(s.move))
   const lastPlayer = state.trick.lastPlayer
-  if (lastPlayer !== null && lastPlayer === partnerOf(seat)) {
-    // Exception: if the partner played something weak and an opponent is about to finish, we may
-    // still want to take over — but normally, pass.
+  const partnerWinning = lastPlayer !== null && lastPlayer === partnerOf(ctx.seat)
+
+  // Partner holds the trick: only take over to convert a locked, guaranteed run-out.
+  if (partnerWinning) {
+    if (MASTER_TUNING.convert) {
+      const convert = nonBombs.filter((s) => locksRunOut(ctx, s))
+      if (convert.length > 0) return { type: 'play', combo: best(convert)!.move }
+    }
     return { type: 'pass' }
   }
 
-  const baseScore = scoreHand(shapeFromUnseen(hand, unseen, level))
-  const oppMin = minOpponentCards(state, seat)
-  const partnerCards = partnerActiveCards(state, seat)
-  const myCount = hand.length
-
-  // Best non-bomb beater by resulting-hand quality.
-  const nonBombs = responses.filter((m) => !isBomb(m))
-  let bestNB: Combination | null = null
-  let bestNBScore = Infinity
-  for (const m of nonBombs) {
-    const s = evalAfter(hand, m, unseen, level)
-    if (s < bestNBScore) {
-      bestNBScore = s
-      bestNB = m
-    }
+  // Endgame tempo grab: winning this trick locks a guaranteed finish — take it.
+  if (MASTER_TUNING.tempoGrab) {
+    const locking = nonBombs.filter((s) => locksRunOut(ctx, s))
+    if (locking.length > 0) return { type: 'play', combo: best(locking)!.move }
   }
 
-  const pressure = oppMin <= 6 // an opponent is getting close to out
+  const baseShape = shapeFromUnseen(ctx.hand, ctx.unseen, ctx.level)
+  const baseScore = scoreHand(baseShape)
+  const myCount = ctx.hand.length
+  const pressure = ctx.oppMin <= 6
   const short = myCount <= 8
-  const partnerSafe = partnerCards !== null && partnerCards <= 5 // partner nearly done — keep lead off opponents
+  const partnerSafe = ctx.partnerCards !== null && ctx.partnerCards <= 5
+
+  const bestNB = best(nonBombs)
+
+  // An opponent nearly out is winning the trick: deny with the cheapest beater, bomb if needed.
+  if (MASTER_TUNING.denial && ctx.oppMin <= 3) {
+    if (bestNB) return { type: 'play', combo: bestNB.move }
+    const denialBomb = best(scored)
+    if (denialBomb) return { type: 'play', combo: denialBomb.move }
+  }
 
   if (bestNB) {
-    // Beating costs us if the resulting hand is meaningfully worse than holding (we spent a control
-    // card for little). Otherwise, take the cheap trick to keep tempo.
-    const wasteful = bestNBScore > baseScore + 0.5
+    const wasteful = bestNB.raw > baseScore + 0.5
     if (!wasteful || pressure || short || partnerSafe) {
-      return { type: 'play', combo: bestNB }
+      return { type: 'play', combo: bestNB.move }
     }
     return { type: 'pass' }
   }
 
-  // Only bombs can beat. Spend one to deny an opponent who's about to finish, to grab tempo when
-  // short, or when doing so leaves us dominant; otherwise hold the bomb.
-  let bestBomb: Combination | null = null
-  let bestBombScore = Infinity
-  for (const m of responses) {
-    const s = evalAfter(hand, m, unseen, level)
-    if (s < bestBombScore) {
-      bestBombScore = s
-      bestBomb = m
-    }
-  }
+  // Only bombs can answer. Spend one to deny, to seize tempo when short, when the partner is
+  // nearly out, when it materially improves the hand — or when it locks a run-out.
+  const bombs = scored.filter((s) => isBomb(s.move))
+  const bestBomb = best(bombs)
   if (bestBomb) {
-    const dominantAfter = bestBombScore <= baseScore - 1 // bombing materially improves our position
-    if (oppMin <= 6 || myCount <= 6 || partnerSafe || dominantAfter) {
-      return { type: 'play', combo: bestBomb }
+    const dominantAfter = bestBomb.raw <= baseScore - 1
+    const locks = bestBomb.uncAfter === 0 && !ctx.bombRisk
+    if (ctx.oppMin <= 6 || myCount <= 6 || partnerSafe || dominantAfter || locks) {
+      return { type: 'play', combo: bestBomb.move }
     }
   }
   return { type: 'pass' }
 }
 
 export function chooseMasterMove(state: GameState, seat: Seat): AiAction {
-  const unseen = computeUnseen(state.hands[seat], state.played, state.level)
-  if (state.trick.current === null) return chooseLead(state, seat, unseen)
-  return chooseFollow(state, seat, unseen)
+  const ctx = makeCtx(state, seat)
+  if (state.trick.current === null) return chooseLead(ctx)
+  return chooseFollow(ctx)
 }
